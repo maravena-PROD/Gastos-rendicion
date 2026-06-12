@@ -222,6 +222,24 @@ GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvg...\n...\n-----END PRIVAT
 
 ---
 
+## 8.1 Verificar la configuración (recomendado)
+
+Antes de levantar la app, corre el verificador. Comprueba que estén todas las variables y que las
+credenciales **realmente funcionen** contra Sheets, Drive y Claude (para Drive crea un archivo de
+prueba y lo borra; no deja basura):
+
+```bash
+npm run verificar
+```
+
+Verás un reporte con ✓ (verde) y ✗ (rojo) por cada parte, y al final un resumen. Ve completando el
+`.env.local` y vuelve a correrlo hasta que todo esté en verde. Cada ✗ trae una pista de qué revisar.
+
+> Si todas las líneas salen en rojo con "faltan variables", probablemente no estás usando
+> `npm run verificar` (que es el que carga el `.env.local`).
+
+---
+
 ## 9. Correr la app en local
 
 ```bash
