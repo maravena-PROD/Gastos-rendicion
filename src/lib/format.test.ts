@@ -30,3 +30,29 @@ describe("parseCLP", () => {
     expect(parseCLP("nada")).toBeNull();
   });
 });
+
+import { formatRut, validarRut } from "./format";
+
+describe("formatRut", () => {
+  it("formatea RUT con puntos y guión", () => {
+    expect(formatRut("765432197")).toBe("76.543.219-7");
+  });
+  it("acepta dígito verificador K", () => {
+    expect(formatRut("10000013K")).toBe("10.000.013-K");
+  });
+  it("normaliza un RUT que ya viene con formato", () => {
+    expect(formatRut("76.543.219-7")).toBe("76.543.219-7");
+  });
+});
+
+describe("validarRut", () => {
+  it("valida un RUT correcto (módulo 11)", () => {
+    expect(validarRut("76.543.219-7")).toBe(true);
+  });
+  it("rechaza un RUT con dígito verificador incorrecto", () => {
+    expect(validarRut("76.543.219-8")).toBe(false);
+  });
+  it("rechaza basura", () => {
+    expect(validarRut("hola")).toBe(false);
+  });
+});
