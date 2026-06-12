@@ -1,5 +1,27 @@
 import type { Gasto, Categoria, EstadoGasto } from "./types";
 import { CATEGORIAS } from "./types";
+import { google } from "googleapis";
+
+const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
+
+function getEnv(name: string): string {
+  const v = process.env[name];
+  if (!v) throw new Error(`Falta la variable de entorno ${name}`);
+  return v;
+}
+
+/** Construye un cliente de Sheets autenticado con la service account. */
+function getSheetsClient() {
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: getEnv("GOOGLE_SERVICE_ACCOUNT_EMAIL"),
+      // Las claves en .env usan "\n" literales; los convertimos a saltos reales.
+      private_key: getEnv("GOOGLE_PRIVATE_KEY").replace(/\\n/g, "\n"),
+    },
+    scopes: SCOPES,
+  });
+  return google.sheets({ version: "v4", auth });
+}
 
 /** Orden de columnas de la pestaña Gastos (debe coincidir con los encabezados). */
 export const GASTOS_HEADERS = [
@@ -79,4 +101,26 @@ export function rowToGasto(row: string[]): Gasto {
     estado: parseEstado(cell(row, 14)),
     fechaCreacion: cell(row, 15),
   };
+}
+
+/** Lee todos los gastos de la pestaña Gastos (desde la fila 2). */
+export async function listGastos(): Promise<Gasto[]> {
+  const sheets = getSheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
+    range: "Gastos!A2:P",
+  });
+  const rows = res.data.values ?? [];
+  return rows.map((r) => rowToGasto(r as string[]));
+}
+
+/** Agrega un gasto como nueva fila en la pestaña Gastos. */
+export async function appendGasto(g: Gasto): Promise<void> {
+  const sheets = getSheetsClient();
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
+    range: "Gastos!A2:P",
+    valueInputOption: "RAW",
+    requestBody: { values: [gastoToRow(g)] },
+  });
 }

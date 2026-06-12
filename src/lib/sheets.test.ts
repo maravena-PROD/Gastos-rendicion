@@ -1,6 +1,30 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { gastoToRow, rowToGasto } from "./sheets";
 import type { Gasto } from "./types";
+
+// Mock de googleapis: capturamos las llamadas a spreadsheets.values
+const valuesGet = vi.fn();
+const valuesAppend = vi.fn();
+
+vi.mock("googleapis", () => {
+  return {
+    google: {
+      auth: {
+        GoogleAuth: class {
+          constructor(_opts: unknown) {}
+        },
+      },
+      sheets: () => ({
+        spreadsheets: {
+          values: {
+            get: (...args: unknown[]) => valuesGet(...args),
+            append: (...args: unknown[]) => valuesAppend(...args),
+          },
+        },
+      }),
+    },
+  };
+});
 
 const gasto: Gasto = {
   id: "g_a1b2c3",
@@ -45,5 +69,43 @@ describe("gastoToRow / rowToGasto", () => {
     const parsed = rowToGasto(row);
     expect(parsed.imagenDriveId).toBe("");
     expect(parsed.estado).toBe("Registrado"); // default cuando falta
+  });
+});
+
+import { listGastos, appendGasto } from "./sheets";
+
+beforeEach(() => {
+  valuesGet.mockReset();
+  valuesAppend.mockReset();
+  process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL = "sa@test.iam.gserviceaccount.com";
+  process.env.GOOGLE_PRIVATE_KEY = "fake-key";
+  process.env.GOOGLE_SHEETS_ID = "sheet-123";
+});
+
+describe("listGastos", () => {
+  it("devuelve los gastos mapeados, sin la fila de encabezados", async () => {
+    valuesGet.mockResolvedValue({
+      data: { values: [gastoToRow(gasto)] }, // la API recibe range desde la fila 2
+    });
+    const result = await listGastos();
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(gasto);
+  });
+
+  it("devuelve [] cuando no hay filas", async () => {
+    valuesGet.mockResolvedValue({ data: {} });
+    expect(await listGastos()).toEqual([]);
+  });
+});
+
+describe("appendGasto", () => {
+  it("llama a append con la fila del gasto", async () => {
+    valuesAppend.mockResolvedValue({});
+    await appendGasto(gasto);
+    expect(valuesAppend).toHaveBeenCalledTimes(1);
+    const arg = valuesAppend.mock.calls[0][0] as {
+      requestBody: { values: string[][] };
+    };
+    expect(arg.requestBody.values[0]).toEqual(gastoToRow(gasto));
   });
 });
