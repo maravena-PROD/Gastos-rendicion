@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { AuthGate } from "@/components/AuthGate";
 import { cerrarSesion, getIdTokenActual } from "@/lib/firebase-client";
 import {
@@ -156,6 +157,9 @@ function Chat() {
               {sesion.nombre} · {sesion.rol}
             </span>
           )}
+          <Link href="/dashboard" className="rounded-lg border px-3 py-1 text-xs">
+            Dashboard
+          </Link>
           <button onClick={() => cerrarSesion()} className="rounded-lg border px-3 py-1 text-xs">
             Salir
           </button>
