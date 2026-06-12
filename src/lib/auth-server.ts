@@ -14,5 +14,8 @@ export async function autenticar(token: string): Promise<ResultadoAcceso> {
     return { ok: false, status: 401, motivo: "Token inválido o expirado" };
   }
   const usuario = claims.email ? await getUsuario(claims.email) : null;
-  return decidirAcceso({ email: claims.email, name: claims.name }, usuario);
+  return decidirAcceso(
+    { email: claims.email, name: claims.name, emailVerified: claims.emailVerified },
+    usuario,
+  );
 }

@@ -18,6 +18,7 @@ export type ResultadoAcceso =
 export interface ClaimsToken {
   email?: string;
   name?: string;
+  emailVerified?: boolean;
 }
 
 /**
@@ -31,6 +32,9 @@ export function decidirAcceso(
   const email = (claims.email ?? "").toLowerCase();
   if (!email) {
     return { ok: false, status: 401, motivo: "El token no contiene email" };
+  }
+  if (claims.emailVerified !== true) {
+    return { ok: false, status: 403, motivo: "Email no verificado" };
   }
   if (!email.endsWith(`@${DOMINIO_PERMITIDO}`)) {
     return { ok: false, status: 403, motivo: "Dominio de correo no autorizado" };

@@ -36,7 +36,7 @@ describe("autenticar", () => {
   });
 
   it("autentica a un usuario válido y devuelve su sesión", async () => {
-    verificarIdToken.mockResolvedValue({ email: "maravena@bosca.cl", name: "M. Aravena", uid: "u1" });
+    verificarIdToken.mockResolvedValue({ email: "maravena@bosca.cl", name: "M. Aravena", emailVerified: true, uid: "u1" });
     getUsuario.mockResolvedValue(usuario);
     const r = await autenticar("bueno");
     expect(r).toEqual({
@@ -47,7 +47,7 @@ describe("autenticar", () => {
   });
 
   it("devuelve 403 si el usuario no está en la planilla", async () => {
-    verificarIdToken.mockResolvedValue({ email: "nuevo@bosca.cl", name: "Nuevo", uid: "u2" });
+    verificarIdToken.mockResolvedValue({ email: "nuevo@bosca.cl", name: "Nuevo", emailVerified: true, uid: "u2" });
     getUsuario.mockResolvedValue(null);
     const r = await autenticar("bueno");
     expect(r.ok).toBe(false);

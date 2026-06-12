@@ -25,11 +25,17 @@ function getAdminApp(): App {
 export interface ClaimsVerificados {
   email?: string;
   name?: string;
+  emailVerified: boolean;
   uid: string;
 }
 
 /** Verifica un ID token de Firebase y devuelve sus claims. Lanza si es inválido. */
 export async function verificarIdToken(token: string): Promise<ClaimsVerificados> {
   const decoded = await getAuth(getAdminApp()).verifyIdToken(token);
-  return { email: decoded.email, name: decoded.name as string | undefined, uid: decoded.uid };
+  return {
+    email: decoded.email,
+    name: decoded.name as string | undefined,
+    emailVerified: decoded.email_verified ?? false,
+    uid: decoded.uid,
+  };
 }

@@ -12,7 +12,7 @@ const usuarioAdmin: Usuario = {
 
 describe("decidirAcceso", () => {
   it("permite a un usuario válido del dominio y devuelve su sesión", () => {
-    const r = decidirAcceso({ email: "maravena@bosca.cl", name: "M. Aravena" }, usuarioAdmin);
+    const r = decidirAcceso({ email: "maravena@bosca.cl", name: "M. Aravena", emailVerified: true }, usuarioAdmin);
     expect(r).toEqual({
       ok: true,
       usuario: { email: "maravena@bosca.cl", nombre: "M. Aravena", rol: "Administrador" },
@@ -31,14 +31,29 @@ describe("decidirAcceso", () => {
   });
 
   it("rechaza con 403 si el usuario no está en la planilla o está inactivo", () => {
-    const r = decidirAcceso({ email: "maravena@bosca.cl", name: "M. Aravena" }, null);
+    const r = decidirAcceso({ email: "maravena@bosca.cl", name: "M. Aravena", emailVerified: true }, null);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.status).toBe(403);
   });
 
   it("normaliza el email del token a minúsculas para el chequeo de dominio", () => {
-    const r = decidirAcceso({ email: "MARAVENA@BOSCA.CL", name: "M" }, usuarioAdmin);
+    const r = decidirAcceso({ email: "MARAVENA@BOSCA.CL", name: "M", emailVerified: true }, usuarioAdmin);
     expect(r.ok).toBe(true);
+  });
+
+  it("rechaza con 403 si el email no está verificado", () => {
+    const r = decidirAcceso({ email: "maravena@bosca.cl", name: "M. Aravena", emailVerified: false }, usuarioAdmin);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.status).toBe(403);
+  });
+
+  it("rechaza un email que solo aparenta ser del dominio (sufijo malicioso)", () => {
+    const r = decidirAcceso(
+      { email: "evil@bosca.cl.attacker.com", name: "Evil", emailVerified: true },
+      usuarioAdmin,
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.status).toBe(403);
   });
 });
 
