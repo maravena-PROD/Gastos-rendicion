@@ -81,6 +81,12 @@ function parseEstado(v: string): EstadoGasto {
   return "Registrado";
 }
 
+/** Parsea el monto de una celda a entero CLP; 0 si no es un número finito. */
+function parseMonto(v: string): number {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
 /** Convierte una fila de Sheets en un Gasto. */
 export function rowToGasto(row: string[]): Gasto {
   return {
@@ -93,7 +99,7 @@ export function rowToGasto(row: string[]): Gasto {
     rutEmisor: cell(row, 6),
     numeroDocumento: cell(row, 7),
     categoria: parseCategoria(cell(row, 8)),
-    monto: parseInt(cell(row, 9) || "0", 10),
+    monto: parseMonto(cell(row, 9)),
     direccion: cell(row, 10),
     observacion: cell(row, 11),
     imagenUrl: cell(row, 12),

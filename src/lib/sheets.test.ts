@@ -70,6 +70,12 @@ describe("gastoToRow / rowToGasto", () => {
     expect(parsed.imagenDriveId).toBe("");
     expect(parsed.estado).toBe("Registrado"); // default cuando falta
   });
+
+  it("rowToGasto convierte monto no numérico a 0", () => {
+    const row = gastoToRow(gasto);
+    row[9] = "no-es-numero";
+    expect(rowToGasto(row).monto).toBe(0);
+  });
 });
 
 import { listGastos, appendGasto } from "./sheets";
