@@ -74,6 +74,16 @@ describe("extraerDeTexto", () => {
     const r = await extraerDeTexto("x");
     expect(r.monto).toBeNull();
   });
+
+  it("lanza si la respuesta no trae bloque de texto", async () => {
+    messagesCreate.mockResolvedValue({ content: [] });
+    await expect(extraerDeTexto("x")).rejects.toThrow();
+  });
+
+  it("lanza si el texto no es JSON válido", async () => {
+    messagesCreate.mockResolvedValue({ content: [{ type: "text", text: "no es json" }] });
+    await expect(extraerDeTexto("x")).rejects.toThrow();
+  });
 });
 
 describe("extraerDeImagen", () => {

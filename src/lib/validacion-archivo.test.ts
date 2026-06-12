@@ -26,4 +26,8 @@ describe("validarImagen", () => {
     const r = validarImagen(grande);
     expect(r.ok).toBe(false);
   });
+  it("rechaza un buffer más corto que la firma del formato", () => {
+    const r = validarImagen(Buffer.from([0xff, 0xd8])); // JPEG truncado
+    expect(r.ok).toBe(false);
+  });
 });

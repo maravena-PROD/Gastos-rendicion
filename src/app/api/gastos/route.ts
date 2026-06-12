@@ -46,7 +46,14 @@ export async function POST(req: Request) {
   }
 
   const categoria = normalizarCategoria(body.categoria ?? null);
-  if (!body.comercio || typeof body.monto !== "number" || !categoria || !body.fechaDocumento) {
+  if (
+    !body.comercio ||
+    typeof body.monto !== "number" ||
+    !Number.isInteger(body.monto) ||
+    body.monto <= 0 ||
+    !categoria ||
+    !body.fechaDocumento
+  ) {
     return NextResponse.json(
       { error: "Faltan datos esenciales (comercio, monto, categoría, fecha)" },
       { status: 400 },

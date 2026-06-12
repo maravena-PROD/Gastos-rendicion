@@ -37,6 +37,10 @@ export async function subirImagen(
   });
   const id = creado.data.id;
   if (!id) throw new Error("Drive no devolvió un id de archivo");
+  // SEGURIDAD: se da acceso de lectura a "cualquiera con el link". El link no es
+  // adivinable, pero NO está protegido por sesión: si la URL se filtra, la imagen
+  // de la boleta (que puede contener RUT, dirección y monto) queda expuesta.
+  // Exposición intencional para que la boleta sea visible desde la planilla/app.
   await drive.permissions.create({
     fileId: id,
     requestBody: { role: "reader", type: "anyone" },

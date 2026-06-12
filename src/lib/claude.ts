@@ -54,7 +54,10 @@ function aMontoEntero(v: unknown): number | null {
 /** Toma la respuesta cruda de Claude y la mapea a ExtraccionGasto. */
 export function parseExtraccion(res: { content: Array<{ type: string; text?: string }> }): ExtraccionGasto {
   const bloque = res.content.find((c) => c.type === "text");
-  const datos = bloque?.text ? JSON.parse(bloque.text) : {};
+  if (!bloque?.text) {
+    throw new Error("Claude no devolvió contenido de texto para parsear");
+  }
+  const datos = JSON.parse(bloque.text);
   return {
     comercio: datos.comercio ?? null,
     monto: aMontoEntero(datos.monto),

@@ -27,7 +27,9 @@ export async function POST(req: Request) {
   }
 
   const ext = validacion.mimeType === "application/pdf" ? "pdf" : validacion.mimeType.split("/")[1];
-  const nombre = body.nombre ?? `boleta-${Date.now()}.${ext}`;
+  const nombreCrudo = body.nombre ?? `boleta-${Date.now()}.${ext}`;
+  // Sanitiza el nombre que muestra Drive: sin separadores de ruta, longitud acotada.
+  const nombre = nombreCrudo.replace(/[/\\]/g, "_").slice(0, 120) || `boleta-${Date.now()}.${ext}`;
   try {
     const { id, url } = await subirImagen(buffer, validacion.mimeType, nombre);
     return NextResponse.json({ id, url });
