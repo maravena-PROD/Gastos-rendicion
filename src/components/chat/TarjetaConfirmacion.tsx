@@ -9,12 +9,14 @@ import type { GuardarGastoInput } from "@/lib/api-client";
 export function TarjetaConfirmacion({
   borrador,
   imagenUrl,
+  imagenDriveId,
   onConfirmar,
   onCancelar,
   deshabilitado,
 }: {
   borrador: ExtraccionGasto;
   imagenUrl?: string;
+  imagenDriveId?: string;
   onConfirmar: (datos: GuardarGastoInput) => void;
   onCancelar: () => void;
   deshabilitado: boolean;
@@ -42,6 +44,7 @@ export function TarjetaConfirmacion({
       direccion: borrador.direccion ?? undefined,
       observacion: observacion.trim() || undefined,
       imagenUrl,
+      imagenDriveId,
     });
   }
 

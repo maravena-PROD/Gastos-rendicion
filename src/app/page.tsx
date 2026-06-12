@@ -33,7 +33,7 @@ const EXTRACCION_VACIA: ExtraccionGasto = {
 
 type Mensaje =
   | { tipo: "texto"; autor: "bot" | "usuario"; texto: string }
-  | { tipo: "confirmacion"; borrador: ExtraccionGasto; imagenUrl?: string };
+  | { tipo: "confirmacion"; borrador: ExtraccionGasto; imagenUrl?: string; imagenDriveId?: string };
 
 interface Sesion {
   nombre: string;
@@ -78,7 +78,7 @@ function Chat() {
     if (camposFaltantes(nuevoBorrador).length === 0) {
       setMensajes((m) => [
         ...m,
-        { tipo: "confirmacion", borrador: nuevoBorrador, imagenUrl: img?.url },
+        { tipo: "confirmacion", borrador: nuevoBorrador, imagenUrl: img?.url, imagenDriveId: img?.id },
       ]);
     } else {
       const pregunta = siguientePregunta(nuevoBorrador);
@@ -87,6 +87,7 @@ function Chat() {
   }
 
   async function onTexto(texto: string) {
+    setMensajes((m) => m.filter((x) => x.tipo !== "confirmacion"));
     agregarUsuario(texto);
     setProcesando(true);
     try {
@@ -102,6 +103,7 @@ function Chat() {
   }
 
   async function onArchivo(file: File) {
+    setMensajes((m) => m.filter((x) => x.tipo !== "confirmacion"));
     agregarUsuario("📷 (boleta adjunta)");
     setProcesando(true);
     try {
@@ -125,7 +127,7 @@ function Chat() {
   async function onConfirmar(datos: GuardarGastoInput) {
     setProcesando(true);
     try {
-      await guardarGasto({ ...datos, imagenDriveId: imagen?.id });
+      await guardarGasto(datos);
       setMensajes((m) => m.filter((x) => x.tipo !== "confirmacion"));
       agregarBot("✅ Registro completado.");
       setBorrador(EXTRACCION_VACIA);
@@ -171,6 +173,7 @@ function Chat() {
               key={i}
               borrador={m.borrador}
               imagenUrl={m.imagenUrl}
+              imagenDriveId={m.imagenDriveId}
               onConfirmar={onConfirmar}
               onCancelar={onCancelar}
               deshabilitado={procesando}
