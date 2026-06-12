@@ -1,4 +1,4 @@
-import type { Gasto, Categoria, EstadoGasto } from "./types";
+import type { Gasto, Categoria, EstadoGasto, Usuario, Rol } from "./types";
 import { CATEGORIAS } from "./types";
 import { google } from "googleapis";
 
@@ -123,4 +123,37 @@ export async function appendGasto(g: Gasto): Promise<void> {
     valueInputOption: "RAW",
     requestBody: { values: [gastoToRow(g)] },
   });
+}
+
+function parseRol(v: string): Rol {
+  return v === "Administrador" ? "Administrador" : "Usuario";
+}
+
+/** Convierte una fila de la pestaña Usuarios en un Usuario. */
+export function usuarioRowToUsuario(row: string[]): Usuario {
+  return {
+    email: cell(row, 0),
+    nombre: cell(row, 1),
+    rol: parseRol(cell(row, 2)),
+    activo: cell(row, 3).toUpperCase() === "TRUE",
+    fechaAlta: cell(row, 4),
+  };
+}
+
+/**
+ * Busca un usuario por email (case-insensitive). Devuelve null si no existe
+ * o si está inactivo (activo=FALSE).
+ */
+export async function getUsuario(email: string): Promise<Usuario | null> {
+  const sheets = getSheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
+    range: "Usuarios!A2:E",
+  });
+  const rows = (res.data.values ?? []) as string[][];
+  const match = rows
+    .map(usuarioRowToUsuario)
+    .find((u) => u.email.toLowerCase() === email.toLowerCase());
+  if (!match || !match.activo) return null;
+  return match;
 }

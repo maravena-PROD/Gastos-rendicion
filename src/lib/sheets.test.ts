@@ -109,3 +109,52 @@ describe("appendGasto", () => {
     expect(arg.requestBody.values[0]).toEqual(gastoToRow(gasto));
   });
 });
+
+import { getUsuario, usuarioRowToUsuario } from "./sheets";
+
+describe("usuarioRowToUsuario", () => {
+  it("mapea una fila a Usuario y parsea activo", () => {
+    const u = usuarioRowToUsuario([
+      "maravena@bosca.cl",
+      "M. Aravena",
+      "Administrador",
+      "TRUE",
+      "2026-06-01T00:00:00Z",
+    ]);
+    expect(u.rol).toBe("Administrador");
+    expect(u.activo).toBe(true);
+  });
+
+  it("rol desconocido cae a Usuario", () => {
+    const u = usuarioRowToUsuario(["x@bosca.cl", "X", "jefe", "TRUE", ""]);
+    expect(u.rol).toBe("Usuario");
+  });
+});
+
+describe("getUsuario", () => {
+  it("encuentra un usuario activo (case-insensitive en email)", async () => {
+    valuesGet.mockResolvedValue({
+      data: {
+        values: [
+          ["otro@bosca.cl", "Otro", "Usuario", "TRUE", ""],
+          ["maravena@bosca.cl", "M. Aravena", "Administrador", "TRUE", ""],
+        ],
+      },
+    });
+    const u = await getUsuario("MARAVENA@bosca.cl");
+    expect(u?.nombre).toBe("M. Aravena");
+    expect(u?.rol).toBe("Administrador");
+  });
+
+  it("devuelve null si el usuario está inactivo", async () => {
+    valuesGet.mockResolvedValue({
+      data: { values: [["x@bosca.cl", "X", "Usuario", "FALSE", ""]] },
+    });
+    expect(await getUsuario("x@bosca.cl")).toBeNull();
+  });
+
+  it("devuelve null si el usuario no existe", async () => {
+    valuesGet.mockResolvedValue({ data: { values: [] } });
+    expect(await getUsuario("nadie@bosca.cl")).toBeNull();
+  });
+});
