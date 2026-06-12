@@ -41,6 +41,7 @@ export const GASTOS_HEADERS = [
   "imagen_drive_id",
   "estado",
   "fecha_creacion",
+  "usuario_area",
 ] as const;
 
 /** Convierte un Gasto en una fila (string[]) para escribir en Sheets. */
@@ -62,6 +63,7 @@ export function gastoToRow(g: Gasto): string[] {
     g.imagenDriveId,
     g.estado,
     g.fechaCreacion,
+    g.usuarioArea,
   ];
 }
 
@@ -106,6 +108,7 @@ export function rowToGasto(row: string[]): Gasto {
     imagenDriveId: cell(row, 13),
     estado: parseEstado(cell(row, 14)),
     fechaCreacion: cell(row, 15),
+    usuarioArea: cell(row, 16),
   };
 }
 
@@ -114,7 +117,7 @@ export async function listGastos(): Promise<Gasto[]> {
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Gastos!A2:P",
+    range: "Gastos!A2:Q",
   });
   const rows = res.data.values ?? [];
   return rows.map((r) => rowToGasto(r as string[]));
@@ -125,7 +128,7 @@ export async function appendGasto(g: Gasto): Promise<void> {
   const sheets = getSheetsClient();
   await sheets.spreadsheets.values.append({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Gastos!A2:P",
+    range: "Gastos!A2:Q",
     valueInputOption: "RAW",
     requestBody: { values: [gastoToRow(g)] },
   });

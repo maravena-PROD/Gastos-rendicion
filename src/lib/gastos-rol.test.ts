@@ -21,6 +21,7 @@ function gasto(email: string, id: string): Gasto {
     imagenDriveId: "",
     estado: "Registrado",
     fechaCreacion: "",
+    usuarioArea: "",
   };
 }
 

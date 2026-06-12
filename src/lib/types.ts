@@ -30,6 +30,7 @@ export interface Gasto {
   imagenDriveId: string; // puede ser ""
   estado: EstadoGasto;
   fechaCreacion: string; // ISO 8601
+  usuarioArea: string; // área del usuario que registró (denormalizado para reportes)
 }
 
 export type Rol = "Administrador" | "Usuario";

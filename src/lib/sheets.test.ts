@@ -43,6 +43,7 @@ const gasto: Gasto = {
   imagenDriveId: "abc",
   estado: "Registrado",
   fechaCreacion: "2026-06-11T14:32:05Z",
+  usuarioArea: "Operaciones",
 };
 
 describe("gastoToRow / rowToGasto", () => {
@@ -51,7 +52,8 @@ describe("gastoToRow / rowToGasto", () => {
     expect(row[0]).toBe("g_a1b2c3");
     expect(row[8]).toBe("Combustible");
     expect(row[9]).toBe("45000"); // monto como string
-    expect(row.length).toBe(16);
+    expect(row.length).toBe(17);
+    expect(row[16]).toBe("Operaciones");
   });
 
   it("es ida y vuelta (round-trip)", () => {
