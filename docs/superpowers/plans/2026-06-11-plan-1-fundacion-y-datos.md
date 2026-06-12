@@ -317,11 +317,13 @@ describe("formatRut", () => {
 });
 
 describe("validarRut", () => {
+  // 76.543.219-7 es un RUT genuinamente válido (DV módulo 11 del cuerpo 76543219 = 7).
+  // OJO: 76.123.456-7 NO es válido (su DV real es 0), no usar como fixture de validación.
   it("valida un RUT correcto (módulo 11)", () => {
-    expect(validarRut("76.123.456-7")).toBe(true);
+    expect(validarRut("76.543.219-7")).toBe(true);
   });
   it("rechaza un RUT con dígito verificador incorrecto", () => {
-    expect(validarRut("76.123.456-8")).toBe(false);
+    expect(validarRut("76.543.219-8")).toBe(false);
   });
   it("rechaza basura", () => {
     expect(validarRut("hola")).toBe(false);
