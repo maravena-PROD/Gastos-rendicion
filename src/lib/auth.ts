@@ -7,6 +7,7 @@ export interface SesionUsuario {
   email: string;
   nombre: string;
   rol: Rol;
+  area: string;
 }
 
 /** Resultado de decidir acceso: éxito con la sesión, o fallo con código HTTP. */
@@ -44,7 +45,7 @@ export function decidirAcceso(
   }
   return {
     ok: true,
-    usuario: { email: usuario.email, nombre: usuario.nombre, rol: usuario.rol },
+    usuario: { email: usuario.email, nombre: usuario.nombre, rol: usuario.rol, area: usuario.area },
   };
 }
 
