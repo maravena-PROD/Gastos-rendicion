@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rendición de Gastos — Bot Inteligente
 
-## Getting Started
+Aplicación web responsive (mobile-first) para registrar gastos corporativos mediante un bot
+conversacional, usando **texto** o **foto de boleta** (OCR con visión de Claude). Los datos se
+guardan en **Google Sheets** y las imágenes en **Google Drive**.
 
-First, run the development server:
+## Funcionalidad (v1)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- 🤖 **Bot conversacional**: registra gastos por texto, pide los datos que falten, valida y confirma.
+- 📷 **OCR de boletas**: la foto va directo a Claude (visión), que extrae monto, comercio, fecha, RUT
+  y número de documento — sin motor de OCR aparte.
+- 🔐 **Login con roles**: Firebase Auth (Google, restringido a `@bosca.cl`); Administrador vs Usuario.
+- 📊 **Dashboard**: total por período, gráfico por categoría (dona) y tendencia por día; vista global
+  para administradores.
+
+## Stack
+
+Next.js 16 (App Router) · TypeScript · Tailwind CSS · Firebase Auth · Google Sheets/Drive
+(`googleapis`) · Claude (`@anthropic-ai/sdk`, modelo `claude-opus-4-8`) · Recharts · Vitest.
+
+## Arquitectura
+
+```
+Navegador (chat + dashboard)  ──HTTPS──►  Rutas API (Next.js, Node)
+  React · Tailwind                          /api/chat-extraer/upload/gastos/me
+                                            (cada una valida sesión + rol)
+                                                 │
+                  ┌──────────────┬───────────────┼───────────────┐
+               Claude API     Google Sheets   Google Drive    Firebase Auth
+              (bot + OCR)      (base datos)    (imágenes)      (identidad)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+La lógica externa vive en `src/lib/` como módulos aislados y testeables; las rutas en
+`src/app/api/`; la UI en `src/app/` y `src/components/`. Diseño detallado en
+[`docs/superpowers/specs/`](docs/superpowers/specs/) y los planes de implementación en
+[`docs/superpowers/plans/`](docs/superpowers/plans/).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quick start (desarrollo)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm test            # toda la suite (no requiere credenciales — APIs externas mockeadas)
+cp .env.local.example .env.local   # luego edita con tus credenciales (ver Manual de Instalación)
+npm run dev         # http://localhost:3000
+```
 
-## Learn More
+Para correr de verdad (login, OCR, guardado) necesitas configurar Google Cloud, Firebase y la API
+key de Anthropic. **Sigue el [Manual de Instalación](docs/MANUAL-INSTALACION.md) paso a paso.**
 
-To learn more about Next.js, take a look at the following resources:
+## Documentación
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 📦 **[Manual de Instalación](docs/MANUAL-INSTALACION.md)** — configurar Google, Firebase, Anthropic
+  y el `.env.local` desde cero, y desplegar.
+- 👤 **[Manual de Usuario](docs/MANUAL-USUARIO.md)** — cómo registrar y consultar gastos.
+- 🏗️ **[Diseño](docs/superpowers/specs/)** y **[Planes](docs/superpowers/plans/)** — arquitectura,
+  modelo de datos y plan de implementación por hitos.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Estructura del código
 
-## Deploy on Vercel
+| Carpeta | Contenido |
+|---|---|
+| `src/lib/` | Servicios y lógica: `types`, `format` (CLP/RUT), `sheets`, `drive`, `claude`, `auth`, `extraccion`, `dashboard`, `api-client`, … (cada uno con sus tests) |
+| `src/app/api/` | Rutas protegidas: `me`, `extraer`, `upload`, `gastos` |
+| `src/app/` | Páginas: chat (`page.tsx`), `login`, `dashboard` |
+| `src/components/` | UI: `AuthGate`, `chat/*`, `dashboard/*` |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Pruebas
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm test          # una vez
+npm run test:watch
+```
+
+Las APIs externas (Google, Claude, Firebase Admin) están mockeadas, así que la suite corre sin
+credenciales. La verificación funcional en vivo se documenta al final de cada plan y en el Manual de
+Instalación.
+
+## Roadmap (fuera de v1)
+
+- Registro por **voz** (audio → texto).
+- Flujo de **aprobación** de gastos por administrador (el campo `estado` ya existe en el esquema).
+- Migración de Sheets a **Firestore** si crece el volumen (aislada en `src/lib/sheets.ts`).
+- Integración con **ERP / sistemas contables**.
