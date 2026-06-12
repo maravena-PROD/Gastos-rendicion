@@ -34,6 +34,9 @@ export async function subirImagen(
     requestBody: { name: nombre, parents: [getEnv("GOOGLE_DRIVE_FOLDER_ID")] },
     media: { mimeType, body: Readable.from(buffer) },
     fields: "id",
+    // Necesario para que la service account escriba en una Unidad compartida
+    // (Shared Drive). Las service accounts no tienen cuota en "Mi unidad".
+    supportsAllDrives: true,
   });
   const id = creado.data.id;
   if (!id) throw new Error("Drive no devolvió un id de archivo");
@@ -44,6 +47,7 @@ export async function subirImagen(
   await drive.permissions.create({
     fileId: id,
     requestBody: { role: "reader", type: "anyone" },
+    supportsAllDrives: true,
   });
   return { id, url: `https://drive.google.com/file/d/${id}/view` };
 }

@@ -101,10 +101,11 @@ try {
     },
     media: { mimeType: "text/plain", body: Readable.from(Buffer.from("ok")) },
     fields: "id",
+    supportsAllDrives: true,
   });
   const id = creado.data.id;
   ok("Se pudo crear un archivo de prueba en la carpeta de Drive");
-  await drive.files.delete({ fileId: id });
+  await drive.files.delete({ fileId: id, supportsAllDrives: true });
   ok("Archivo de prueba eliminado (limpieza correcta)");
 } catch (e) {
   errores++;
