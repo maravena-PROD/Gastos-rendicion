@@ -146,6 +146,8 @@ export function usuarioRowToUsuario(row: string[]): Usuario {
     rol: parseRol(cell(row, 2)),
     activo: cell(row, 3).toUpperCase() === "TRUE",
     fechaAlta: cell(row, 4),
+    rut: cell(row, 5),
+    area: cell(row, 6),
   };
 }
 
@@ -157,7 +159,7 @@ export async function getUsuario(email: string): Promise<Usuario | null> {
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Usuarios!A2:E",
+    range: "Usuarios!A2:G",
   });
   const rows = (res.data.values ?? []) as string[][];
   const match = rows

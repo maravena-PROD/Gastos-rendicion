@@ -128,9 +128,13 @@ describe("usuarioRowToUsuario", () => {
       "Administrador",
       "TRUE",
       "2026-06-01T00:00:00Z",
+      "76.543.219-7",
+      "Operaciones",
     ]);
     expect(u.rol).toBe("Administrador");
     expect(u.activo).toBe(true);
+    expect(u.rut).toBe("76.543.219-7");
+    expect(u.area).toBe("Operaciones");
   });
 
   it("rol desconocido cae a Usuario", () => {

@@ -19,6 +19,8 @@ const usuario: Usuario = {
   rol: "Administrador",
   activo: true,
   fechaAlta: "",
+  rut: "76.543.219-7",
+  area: "Operaciones",
 };
 
 beforeEach(() => {

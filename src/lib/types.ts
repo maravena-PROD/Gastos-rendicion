@@ -41,4 +41,6 @@ export interface Usuario {
   rol: Rol;
   activo: boolean;
   fechaAlta: string; // ISO 8601
+  rut: string;
+  area: string;
 }
