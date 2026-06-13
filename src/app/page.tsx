@@ -42,7 +42,11 @@ type Mensaje =
 
 function Chat({ perfil }: { perfil: Perfil }) {
   const [mensajes, setMensajes] = useState<Mensaje[]>([
-    { tipo: "texto", autor: "bot", texto: "Hola 👋 Cuéntame un gasto o adjunta una boleta." },
+    {
+      tipo: "texto",
+      autor: "bot",
+      texto: `Hola ${perfil.nombre} 👋 ¿Qué gasto registramos hoy?`,
+    },
   ]);
   const [borrador, setBorrador] = useState<ExtraccionGasto>(EXTRACCION_VACIA);
   const [imagen, setImagen] = useState<{ url: string; id: string } | null>(null);
@@ -153,16 +157,22 @@ function Chat({ perfil }: { perfil: Perfil }) {
 
   return (
     <div className="flex h-screen flex-col">
-      <header className="flex items-center justify-between border-b bg-white px-4 py-3">
-        <span className="font-semibold text-gray-800">Rendición de Gastos</span>
-        <div className="flex items-center gap-3 text-sm text-gray-500">
+      <header className="flex items-center justify-between border-b border-bosca-carbon bg-bosca-carbon px-4 py-3">
+        <span className="font-semibold text-bosca-crema">🔥 Bosca · Rendición de Gastos</span>
+        <div className="flex items-center gap-3 text-sm text-bosca-crema/70">
           <span>
             {perfil.nombre} · {perfil.area}
           </span>
-          <Link href="/dashboard" className="rounded-lg border px-3 py-1 text-xs">
+          <Link
+            href="/dashboard"
+            className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10"
+          >
             Dashboard
           </Link>
-          <button onClick={() => cerrarSesion()} className="rounded-lg border px-3 py-1 text-xs">
+          <button
+            onClick={() => cerrarSesion()}
+            className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10"
+          >
             Salir
           </button>
         </div>
@@ -197,11 +207,11 @@ function Chat({ perfil }: { perfil: Perfil }) {
               <div className="flex gap-2">
                 <button
                   onClick={onOtroSi}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+                  className="rounded-lg bg-bosca-burdeo px-4 py-2 text-sm font-medium text-white hover:bg-bosca-burdeo-h"
                 >
                   Sí
                 </button>
-                <button onClick={onOtroNo} className="rounded-lg border px-4 py-2 text-sm">
+                <button onClick={onOtroNo} className="rounded-lg border border-bosca-gris px-4 py-2 text-sm text-bosca-carbon">
                   No
                 </button>
               </div>
