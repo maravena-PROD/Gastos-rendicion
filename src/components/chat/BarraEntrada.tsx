@@ -22,7 +22,7 @@ export function BarraEntrada({
   }
 
   return (
-    <div className="flex items-center gap-2 border-t bg-white p-3">
+    <div className="flex items-center gap-2 border-t border-bosca-gris bg-bosca-crema p-3">
       <input
         ref={fileRef}
         type="file"
@@ -39,7 +39,7 @@ export function BarraEntrada({
         onClick={() => fileRef.current?.click()}
         disabled={deshabilitado}
         aria-label="Adjuntar boleta"
-        className="flex items-center justify-center rounded-full border p-2.5 text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+        className="flex items-center justify-center rounded-full border border-bosca-gris bg-white p-2.5 text-bosca-carbon hover:bg-bosca-gris disabled:opacity-40"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -62,7 +62,7 @@ export function BarraEntrada({
         </svg>
       </button>
       <input
-        className="flex-1 rounded-full border px-4 py-2 text-sm text-gray-900"
+        className="flex-1 rounded-full border border-bosca-gris bg-white px-4 py-2 text-sm text-bosca-carbon"
         placeholder="Escribe un gasto…"
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
@@ -74,7 +74,7 @@ export function BarraEntrada({
       <button
         onClick={enviar}
         disabled={deshabilitado}
-        className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+        className="rounded-full bg-bosca-burdeo px-4 py-2 text-sm font-medium text-white hover:bg-bosca-burdeo-h disabled:opacity-40"
       >
         Enviar
       </button>

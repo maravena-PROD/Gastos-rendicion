@@ -1,26 +1,17 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Tema Bosca — carbón + burdeo + calidez de brasa */
+@theme {
+  --color-bosca-crema: #f7f4ef;
+  --color-bosca-carbon: #1e1b1a;
+  --color-bosca-burdeo: #7a2230;
+  --color-bosca-burdeo-h: #8e2a3a;
+  --color-bosca-ambar: #c8772e;
+  --color-bosca-gris: #ede8e1;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f7f4ef;
+  color: #1e1b1a;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }

@@ -55,9 +55,12 @@ function Dashboard() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="flex items-center justify-between border-b bg-white px-4 py-3">
-        <span className="font-semibold text-gray-800">Dashboard</span>
-        <Link href="/" className="rounded-lg border px-3 py-1 text-xs">
+      <header className="flex items-center justify-between border-b border-bosca-carbon bg-bosca-carbon px-4 py-3">
+        <span className="font-semibold text-bosca-crema">🔥 Bosca · Dashboard</span>
+        <Link
+          href="/"
+          className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10"
+        >
           ← Chat
         </Link>
       </header>
@@ -74,7 +77,7 @@ function Dashboard() {
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-500">Período:</label>
               <select
-                className="rounded-lg border px-3 py-1 text-sm text-gray-900"
+                className="rounded-lg border border-bosca-gris px-3 py-1 text-sm text-gray-900"
                 value={mesActivo}
                 onChange={(e) => setMesElegido(e.target.value)}
               >
@@ -86,25 +89,25 @@ function Dashboard() {
               </select>
             </div>
 
-            <section className="rounded-2xl border bg-white p-4">
+            <section className="rounded-2xl border border-bosca-gris bg-white p-4">
               <p className="text-xs text-gray-500">Total del período</p>
               <p className="text-3xl font-bold text-gray-900">{formatCLP(totalGastos(delMes))}</p>
               <p className="text-sm text-gray-400">{delMes.length} gastos</p>
             </section>
 
-            <section className="rounded-2xl border bg-white p-4">
+            <section className="rounded-2xl border border-bosca-gris bg-white p-4">
               <h2 className="mb-2 text-sm font-semibold text-gray-700">Por categoría</h2>
               <GraficoCategorias datos={porCategoria(delMes)} />
             </section>
 
-            <section className="rounded-2xl border bg-white p-4">
+            <section className="rounded-2xl border border-bosca-gris bg-white p-4">
               <h2 className="mb-2 text-sm font-semibold text-gray-700">Tendencia</h2>
               <GraficoTendencia datos={tendenciaPorDia(delMes)} />
             </section>
 
             {esAdmin && (
               <>
-                <section className="rounded-2xl border bg-white p-4">
+                <section className="rounded-2xl border border-bosca-gris bg-white p-4">
                   <h2 className="mb-2 text-sm font-semibold text-gray-700">Por usuario</h2>
                   <ul className="divide-y text-sm">
                     {porUsuario(delMes).map((u) => (
@@ -116,9 +119,9 @@ function Dashboard() {
                   </ul>
                 </section>
 
-                <section className="rounded-2xl border bg-white p-4">
+                <section className="rounded-2xl border border-bosca-gris bg-white p-4">
                   <p className="text-xs text-gray-500">Pendientes de aprobación</p>
-                  <p className="text-2xl font-bold text-amber-600">{contarPendientes(delMes)}</p>
+                  <p className="text-2xl font-bold text-bosca-ambar">{contarPendientes(delMes)}</p>
                 </section>
               </>
             )}
