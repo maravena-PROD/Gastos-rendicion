@@ -73,6 +73,7 @@ export async function POST(req: Request) {
     observacion: body.observacion,
     imagenUrl: body.imagenUrl,
     imagenDriveId: body.imagenDriveId,
+    usuarioArea: auth.usuario.area,
   });
 
   try {
