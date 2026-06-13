@@ -21,7 +21,7 @@ export function GraficoTendencia({
         />
         <YAxis tickFormatter={(v: number) => formatCLP(v)} width={72} tick={{ fontSize: 10 }} />
         <Tooltip formatter={(v) => formatCLP(v as number)} />
-        <Bar dataKey="total" fill="#2563eb" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="total" fill="#7a2230" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

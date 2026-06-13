@@ -3,15 +3,16 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { formatCLP } from "@/lib/format";
 
+// Paleta cálida de tierra (Bosca): burdeo, ámbar, terracota, oliva, carbón, gris cálido…
 const COLORES = [
-  "#2563eb",
-  "#16a34a",
-  "#f59e0b",
-  "#dc2626",
-  "#7c3aed",
-  "#0891b2",
-  "#db2777",
-  "#65a30d",
+  "#7a2230",
+  "#c8772e",
+  "#a8553a",
+  "#6b7a3a",
+  "#1e1b1a",
+  "#9c8b7a",
+  "#5a2e3a",
+  "#d9a05b",
 ];
 
 export function GraficoCategorias({
