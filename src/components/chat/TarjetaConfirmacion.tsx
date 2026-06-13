@@ -30,7 +30,8 @@ export function TarjetaConfirmacion({
   const [observacion, setObservacion] = useState("");
 
   const monto = parseCLP(montoTexto);
-  const completo = comercio.trim() !== "" && monto !== null && monto > 0 && fecha !== "" && categoria !== "";
+  const completo =
+    comercio.trim() !== "" && monto !== null && monto > 0 && fecha !== "" && categoria !== "";
 
   function confirmar() {
     if (!completo || categoria === "" || monto === null) return;
@@ -49,21 +50,21 @@ export function TarjetaConfirmacion({
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-      <h3 className="mb-3 text-sm font-semibold text-gray-700">Revisa el gasto</h3>
+    <div className="rounded-2xl border border-bosca-gris bg-white p-4 shadow-sm">
+      <h3 className="mb-3 text-sm font-semibold text-bosca-carbon">Revisa el gasto</h3>
       <div className="flex flex-col gap-3">
         <label className="text-xs text-gray-500">
           Comercio
           <input
-            className="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-gray-900"
+            className="mt-1 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
             value={comercio}
             onChange={(e) => setComercio(e.target.value)}
           />
         </label>
         <label className="text-xs text-gray-500">
-          Monto {monto !== null && <span className="text-gray-400">({formatCLP(monto)})</span>}
+          Monto {monto !== null && <span className="font-medium text-bosca-ambar">({formatCLP(monto)})</span>}
           <input
-            className="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-gray-900"
+            className="mt-1 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
             inputMode="numeric"
             value={montoTexto}
             onChange={(e) => setMontoTexto(e.target.value)}
@@ -73,7 +74,7 @@ export function TarjetaConfirmacion({
           Fecha del documento
           <input
             type="date"
-            className="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-gray-900"
+            className="mt-1 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
           />
@@ -81,7 +82,7 @@ export function TarjetaConfirmacion({
         <label className="text-xs text-gray-500">
           Categoría
           <select
-            className="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-gray-900"
+            className="mt-1 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
           >
@@ -96,7 +97,7 @@ export function TarjetaConfirmacion({
         <label className="text-xs text-gray-500">
           Observación (opcional)
           <input
-            className="mt-1 w-full rounded-lg border px-3 py-2 text-sm text-gray-900"
+            className="mt-1 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
             value={observacion}
             onChange={(e) => setObservacion(e.target.value)}
           />
@@ -109,14 +110,14 @@ export function TarjetaConfirmacion({
         <button
           onClick={confirmar}
           disabled={!completo || deshabilitado}
-          className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+          className="flex-1 rounded-lg bg-bosca-burdeo px-4 py-2 text-sm font-medium text-white hover:bg-bosca-burdeo-h disabled:opacity-40"
         >
           Confirmar registro
         </button>
         <button
           onClick={onCancelar}
           disabled={deshabilitado}
-          className="rounded-lg border px-4 py-2 text-sm disabled:opacity-40"
+          className="rounded-lg border border-bosca-gris px-4 py-2 text-sm text-bosca-carbon disabled:opacity-40"
         >
           Cancelar
         </button>
