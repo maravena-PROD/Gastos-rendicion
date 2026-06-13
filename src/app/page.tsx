@@ -9,7 +9,9 @@ import {
   extraerDesdeImagen,
   subirBoleta,
   guardarGasto,
+  obtenerPerfil,
   type GuardarGastoInput,
+  type Perfil,
 } from "@/lib/api-client";
 import { fileABase64 } from "@/lib/imagen";
 import {
@@ -21,6 +23,7 @@ import {
 import { MensajeBurbuja } from "@/components/chat/MensajeBurbuja";
 import { TarjetaConfirmacion } from "@/components/chat/TarjetaConfirmacion";
 import { BarraEntrada } from "@/components/chat/BarraEntrada";
+import { Onboarding } from "@/components/chat/Onboarding";
 
 const EXTRACCION_VACIA: ExtraccionGasto = {
   comercio: null,
@@ -34,17 +37,12 @@ const EXTRACCION_VACIA: ExtraccionGasto = {
 
 type Mensaje =
   | { tipo: "texto"; autor: "bot" | "usuario"; texto: string }
-  | { tipo: "confirmacion"; borrador: ExtraccionGasto; imagenUrl?: string; imagenDriveId?: string };
+  | { tipo: "confirmacion"; borrador: ExtraccionGasto; imagenUrl?: string; imagenDriveId?: string }
+  | { tipo: "otro" };
 
-interface Sesion {
-  nombre: string;
-  rol: string;
-}
-
-function Chat() {
-  const [sesion, setSesion] = useState<Sesion | null>(null);
+function Chat({ perfil }: { perfil: Perfil }) {
   const [mensajes, setMensajes] = useState<Mensaje[]>([
-    { tipo: "texto", autor: "bot", texto: "Hola 👋 Cuéntame un gasto o adjunta una boleta 📷" },
+    { tipo: "texto", autor: "bot", texto: "Hola 👋 Cuéntame un gasto o adjunta una boleta." },
   ]);
   const [borrador, setBorrador] = useState<ExtraccionGasto>(EXTRACCION_VACIA);
   const [imagen, setImagen] = useState<{ url: string; id: string } | null>(null);
@@ -55,24 +53,14 @@ function Chat() {
     finRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensajes]);
 
-  useEffect(() => {
-    async function cargarSesion() {
-      const token = await getIdTokenActual();
-      if (!token) return;
-      const res = await fetch("/api/me", { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) {
-        const data = await res.json();
-        setSesion({ nombre: data.usuario.nombre, rol: data.usuario.rol });
-      }
-    }
-    cargarSesion();
-  }, []);
-
   function agregarBot(texto: string) {
     setMensajes((m) => [...m, { tipo: "texto", autor: "bot", texto }]);
   }
   function agregarUsuario(texto: string) {
     setMensajes((m) => [...m, { tipo: "texto", autor: "usuario", texto }]);
+  }
+  function quitarTransitorios(m: Mensaje[]) {
+    return m.filter((x) => x.tipo !== "confirmacion" && x.tipo !== "otro");
   }
 
   function avanzar(nuevoBorrador: ExtraccionGasto, img: { url: string; id: string } | null) {
@@ -88,7 +76,7 @@ function Chat() {
   }
 
   async function onTexto(texto: string) {
-    setMensajes((m) => m.filter((x) => x.tipo !== "confirmacion"));
+    setMensajes((m) => quitarTransitorios(m));
     agregarUsuario(texto);
     setProcesando(true);
     try {
@@ -104,8 +92,8 @@ function Chat() {
   }
 
   async function onArchivo(file: File) {
-    setMensajes((m) => m.filter((x) => x.tipo !== "confirmacion"));
-    agregarUsuario("📷 (boleta adjunta)");
+    setMensajes((m) => quitarTransitorios(m));
+    agregarUsuario("📎 (boleta adjunta)");
     setProcesando(true);
     try {
       const base64 = await fileABase64(file);
@@ -129,8 +117,11 @@ function Chat() {
     setProcesando(true);
     try {
       await guardarGasto(datos);
-      setMensajes((m) => m.filter((x) => x.tipo !== "confirmacion"));
-      agregarBot("✅ Registro completado.");
+      setMensajes((m) => [
+        ...quitarTransitorios(m),
+        { tipo: "texto", autor: "bot", texto: "✅ Gasto registrado." },
+        { tipo: "otro" },
+      ]);
       setBorrador(EXTRACCION_VACIA);
       setImagen(null);
     } catch {
@@ -141,10 +132,23 @@ function Chat() {
   }
 
   function onCancelar() {
-    setMensajes((m) => m.filter((x) => x.tipo !== "confirmacion"));
+    setMensajes((m) => quitarTransitorios(m));
     setBorrador(EXTRACCION_VACIA);
     setImagen(null);
     agregarBot("Listo, lo descarté. ¿Registramos otro?");
+  }
+
+  function onOtroSi() {
+    setMensajes((m) => [
+      ...quitarTransitorios(m),
+      { tipo: "texto", autor: "bot", texto: "Dale 👍 Cuéntame el siguiente o adjunta la boleta." },
+    ]);
+  }
+  function onOtroNo() {
+    setMensajes((m) => [
+      ...quitarTransitorios(m),
+      { tipo: "texto", autor: "bot", texto: "Perfecto, ¡gracias! Cuando quieras registrar otro, escríbeme." },
+    ]);
   }
 
   return (
@@ -152,11 +156,9 @@ function Chat() {
       <header className="flex items-center justify-between border-b bg-white px-4 py-3">
         <span className="font-semibold text-gray-800">Rendición de Gastos</span>
         <div className="flex items-center gap-3 text-sm text-gray-500">
-          {sesion && (
-            <span>
-              {sesion.nombre} · {sesion.rol}
-            </span>
-          )}
+          <span>
+            {perfil.nombre} · {perfil.area}
+          </span>
           <Link href="/dashboard" className="rounded-lg border px-3 py-1 text-xs">
             Dashboard
           </Link>
@@ -167,23 +169,45 @@ function Chat() {
       </header>
 
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
-        {mensajes.map((m, i) =>
-          m.tipo === "texto" ? (
-            <MensajeBurbuja key={i} autor={m.autor}>
-              {m.texto}
-            </MensajeBurbuja>
-          ) : (
-            <TarjetaConfirmacion
-              key={i}
-              borrador={m.borrador}
-              imagenUrl={m.imagenUrl}
-              imagenDriveId={m.imagenDriveId}
-              onConfirmar={onConfirmar}
-              onCancelar={onCancelar}
-              deshabilitado={procesando}
-            />
-          ),
-        )}
+        {mensajes.map((m, i) => {
+          if (m.tipo === "texto") {
+            return (
+              <MensajeBurbuja key={i} autor={m.autor}>
+                {m.texto}
+              </MensajeBurbuja>
+            );
+          }
+          if (m.tipo === "confirmacion") {
+            return (
+              <TarjetaConfirmacion
+                key={i}
+                borrador={m.borrador}
+                imagenUrl={m.imagenUrl}
+                imagenDriveId={m.imagenDriveId}
+                onConfirmar={onConfirmar}
+                onCancelar={onCancelar}
+                deshabilitado={procesando}
+              />
+            );
+          }
+          // tipo "otro"
+          return (
+            <div key={i} className="flex flex-col items-start gap-2">
+              <MensajeBurbuja autor="bot">¿Deseas registrar otro?</MensajeBurbuja>
+              <div className="flex gap-2">
+                <button
+                  onClick={onOtroSi}
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+                >
+                  Sí
+                </button>
+                <button onClick={onOtroNo} className="rounded-lg border px-4 py-2 text-sm">
+                  No
+                </button>
+              </div>
+            </div>
+          );
+        })}
         {procesando && <p className="text-center text-xs text-gray-400">Procesando…</p>}
         <div ref={finRef} />
       </div>
@@ -193,10 +217,57 @@ function Chat() {
   );
 }
 
+function PaginaProtegida() {
+  const [perfil, setPerfil] = useState<Perfil | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  async function cargarPerfil() {
+    try {
+      const token = await getIdTokenActual();
+      if (!token) return;
+      const p = await obtenerPerfil();
+      setPerfil(p);
+    } catch {
+      setError("No se pudo cargar tu perfil.");
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  useEffect(() => {
+    cargarPerfil();
+  }, []);
+
+  if (cargando) {
+    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-400">Cargando…</div>;
+  }
+  if (error || !perfil) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-red-600">
+        {error ?? "Error"}
+      </div>
+    );
+  }
+  if (!perfil.completo) {
+    return (
+      <Onboarding
+        nombreInicial={perfil.nombre}
+        areas={perfil.areas}
+        onListo={() => {
+          setCargando(true);
+          cargarPerfil();
+        }}
+      />
+    );
+  }
+  return <Chat perfil={perfil} />;
+}
+
 export default function Page() {
   return (
     <AuthGate>
-      <Chat />
+      <PaginaProtegida />
     </AuthGate>
   );
 }
