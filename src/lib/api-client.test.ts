@@ -65,3 +65,35 @@ describe("obtenerGastos", () => {
     expect(opts.method).toBe("GET");
   });
 });
+
+import { obtenerPerfil, guardarPerfil } from "./api-client";
+
+describe("obtenerPerfil", () => {
+  it("hace GET a /api/perfil", async () => {
+    mockFetch(true, { nombre: "M", rut: "", area: "", completo: false, areas: ["Operaciones"] });
+    const r = await obtenerPerfil();
+    expect(r.completo).toBe(false);
+    expect(r.areas).toEqual(["Operaciones"]);
+    const [url, opts] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toBe("/api/perfil");
+    expect(opts.method).toBe("GET");
+  });
+});
+
+describe("guardarPerfil", () => {
+  it("hace POST a /api/perfil con el perfil", async () => {
+    mockFetch(true, { ok: true });
+    await guardarPerfil({ nombre: "M. Aravena", rut: "76.543.219-7", area: "Operaciones" });
+    const [url, opts] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toBe("/api/perfil");
+    expect(opts.method).toBe("POST");
+    expect(JSON.parse(opts.body).area).toBe("Operaciones");
+  });
+
+  it("lanza con el mensaje del backend si falla", async () => {
+    mockFetch(false, { error: "RUT inválido" });
+    await expect(
+      guardarPerfil({ nombre: "M", rut: "1-1", area: "x" }),
+    ).rejects.toThrow("RUT inválido");
+  });
+});
