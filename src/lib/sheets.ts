@@ -151,6 +151,42 @@ export function usuarioRowToUsuario(row: string[]): Usuario {
   };
 }
 
+/**
+ * Actualiza el perfil (nombre, rut, area) de un usuario en la pestaña Usuarios,
+ * preservando rol, activo y fecha_alta. Lanza si el usuario no existe.
+ */
+export async function actualizarPerfilUsuario(
+  email: string,
+  perfil: { nombre: string; rut: string; area: string },
+): Promise<void> {
+  const sheets = getSheetsClient();
+  const spreadsheetId = getEnv("GOOGLE_SHEETS_ID");
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: "Usuarios!A2:G",
+  });
+  const rows = (res.data.values ?? []) as string[][];
+  const idx = rows.findIndex((r) => (r[0] ?? "").toLowerCase() === email.toLowerCase());
+  if (idx === -1) throw new Error("Usuario no encontrado");
+  const fila = rows[idx];
+  const filaActualizada = [
+    fila[0] ?? email, // email
+    perfil.nombre, // nombre
+    fila[2] ?? "Usuario", // rol (preservado)
+    fila[3] ?? "TRUE", // activo (preservado)
+    fila[4] ?? "", // fecha_alta (preservada)
+    perfil.rut, // rut
+    perfil.area, // area
+  ];
+  const numeroFila = idx + 2; // fila 1 = encabezados
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `Usuarios!A${numeroFila}:G${numeroFila}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [filaActualizada] },
+  });
+}
+
 /** Lee las áreas de trabajo válidas de la pestaña Areas (columna A, desde fila 2). */
 export async function listarAreas(): Promise<string[]> {
   const sheets = getSheetsClient();
