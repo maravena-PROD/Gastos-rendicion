@@ -73,7 +73,7 @@ try {
   const sheets = google.sheets({ version: "v4", auth });
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SHEETS_ID,
-    range: "Usuarios!A2:E",
+    range: "Usuarios!A2:G",
   });
   const filas = res.data.values ?? [];
   ok(`Conectado a la planilla. Usuarios activos encontrados: ${filas.length}`);

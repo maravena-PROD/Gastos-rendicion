@@ -28,6 +28,7 @@ function g(parcial: Partial<Gasto>): Gasto {
     imagenDriveId: "",
     estado: "Registrado",
     fechaCreacion: "",
+    usuarioArea: "",
     ...parcial,
   };
 }

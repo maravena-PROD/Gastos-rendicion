@@ -76,3 +76,29 @@ export function guardarGasto(payload: GuardarGastoInput): Promise<{ gasto: Gasto
 export function obtenerGastos(): Promise<{ gastos: Gasto[] }> {
   return pedir<{ gastos: Gasto[] }>("/api/gastos", { method: "GET" });
 }
+
+/** Perfil del usuario + áreas disponibles. */
+export interface Perfil {
+  nombre: string;
+  rut: string;
+  area: string;
+  completo: boolean;
+  areas: string[];
+}
+
+/** Obtiene el perfil del usuario actual y las áreas válidas. */
+export function obtenerPerfil(): Promise<Perfil> {
+  return pedir<Perfil>("/api/perfil", { method: "GET" });
+}
+
+/** Guarda el perfil (nombre, rut, area) del usuario actual. */
+export function guardarPerfil(perfil: {
+  nombre: string;
+  rut: string;
+  area: string;
+}): Promise<{ ok: boolean }> {
+  return pedir<{ ok: boolean }>("/api/perfil", {
+    method: "POST",
+    body: JSON.stringify(perfil),
+  });
+}

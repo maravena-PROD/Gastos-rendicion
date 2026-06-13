@@ -15,6 +15,7 @@ export interface NuevoGastoInput {
   observacion?: string;
   imagenUrl?: string;
   imagenDriveId?: string;
+  usuarioArea?: string;
 }
 
 /** Arma un Gasto completo a partir de los datos extraídos, con id y timestamps. */
@@ -37,5 +38,6 @@ export function crearGasto(input: NuevoGastoInput): Gasto {
     imagenDriveId: input.imagenDriveId ?? "",
     estado: "Registrado",
     fechaCreacion: ahora,
+    usuarioArea: input.usuarioArea ?? "",
   };
 }

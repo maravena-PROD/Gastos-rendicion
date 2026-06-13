@@ -5,6 +5,7 @@ import type { Gasto } from "./types";
 // Mock de googleapis: capturamos las llamadas a spreadsheets.values
 const valuesGet = vi.fn();
 const valuesAppend = vi.fn();
+const valuesUpdate = vi.fn();
 
 vi.mock("googleapis", () => {
   return {
@@ -19,6 +20,7 @@ vi.mock("googleapis", () => {
           values: {
             get: (...args: unknown[]) => valuesGet(...args),
             append: (...args: unknown[]) => valuesAppend(...args),
+            update: (...args: unknown[]) => valuesUpdate(...args),
           },
         },
       }),
@@ -43,6 +45,7 @@ const gasto: Gasto = {
   imagenDriveId: "abc",
   estado: "Registrado",
   fechaCreacion: "2026-06-11T14:32:05Z",
+  usuarioArea: "Operaciones",
 };
 
 describe("gastoToRow / rowToGasto", () => {
@@ -51,7 +54,8 @@ describe("gastoToRow / rowToGasto", () => {
     expect(row[0]).toBe("g_a1b2c3");
     expect(row[8]).toBe("Combustible");
     expect(row[9]).toBe("45000"); // monto como string
-    expect(row.length).toBe(16);
+    expect(row.length).toBe(17);
+    expect(row[16]).toBe("Operaciones");
   });
 
   it("es ida y vuelta (round-trip)", () => {
@@ -83,6 +87,7 @@ import { listGastos, appendGasto } from "./sheets";
 beforeEach(() => {
   valuesGet.mockReset();
   valuesAppend.mockReset();
+  valuesUpdate.mockReset();
   process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL = "sa@test.iam.gserviceaccount.com";
   process.env.GOOGLE_PRIVATE_KEY = "fake-key";
   process.env.GOOGLE_SHEETS_ID = "sheet-123";
@@ -116,7 +121,7 @@ describe("appendGasto", () => {
   });
 });
 
-import { getUsuario, usuarioRowToUsuario } from "./sheets";
+import { getUsuario, usuarioRowToUsuario, listarAreas, actualizarPerfilUsuario } from "./sheets";
 
 describe("usuarioRowToUsuario", () => {
   it("mapea una fila a Usuario y parsea activo", () => {
@@ -126,14 +131,31 @@ describe("usuarioRowToUsuario", () => {
       "Administrador",
       "TRUE",
       "2026-06-01T00:00:00Z",
+      "76.543.219-7",
+      "Operaciones",
     ]);
     expect(u.rol).toBe("Administrador");
     expect(u.activo).toBe(true);
+    expect(u.rut).toBe("76.543.219-7");
+    expect(u.area).toBe("Operaciones");
   });
 
   it("rol desconocido cae a Usuario", () => {
     const u = usuarioRowToUsuario(["x@bosca.cl", "X", "jefe", "TRUE", ""]);
     expect(u.rol).toBe("Usuario");
+  });
+});
+
+describe("listarAreas", () => {
+  it("devuelve las áreas no vacías de la pestaña Areas", async () => {
+    valuesGet.mockResolvedValue({
+      data: { values: [["Operaciones"], ["Mantención"], [""], ["Comercial"]] },
+    });
+    expect(await listarAreas()).toEqual(["Operaciones", "Mantención", "Comercial"]);
+  });
+  it("devuelve [] si no hay áreas", async () => {
+    valuesGet.mockResolvedValue({ data: {} });
+    expect(await listarAreas()).toEqual([]);
   });
 });
 
@@ -162,5 +184,47 @@ describe("getUsuario", () => {
   it("devuelve null si el usuario no existe", async () => {
     valuesGet.mockResolvedValue({ data: { values: [] } });
     expect(await getUsuario("nadie@bosca.cl")).toBeNull();
+  });
+});
+
+describe("actualizarPerfilUsuario", () => {
+  it("reescribe la fila del usuario preservando rol/activo/fecha_alta", async () => {
+    valuesGet.mockResolvedValue({
+      data: {
+        values: [
+          ["otro@bosca.cl", "Otro", "Usuario", "TRUE", "2026-01-01", "", ""],
+          ["maravena@bosca.cl", "Viejo Nombre", "Administrador", "TRUE", "2026-06-01", "", ""],
+        ],
+      },
+    });
+    valuesUpdate.mockResolvedValue({});
+    await actualizarPerfilUsuario("maravena@bosca.cl", {
+      nombre: "M. Aravena",
+      rut: "76.543.219-7",
+      area: "Operaciones",
+    });
+    expect(valuesUpdate).toHaveBeenCalledTimes(1);
+    const arg = valuesUpdate.mock.calls[0][0] as {
+      range: string;
+      requestBody: { values: string[][] };
+    };
+    // el usuario está en la 2ª fila de datos => fila 3 de la hoja
+    expect(arg.range).toBe("Usuarios!A3:G3");
+    expect(arg.requestBody.values[0]).toEqual([
+      "maravena@bosca.cl",
+      "M. Aravena",
+      "Administrador", // rol preservado
+      "TRUE", // activo preservado
+      "2026-06-01", // fecha_alta preservada
+      "76.543.219-7",
+      "Operaciones",
+    ]);
+  });
+
+  it("lanza si el usuario no existe", async () => {
+    valuesGet.mockResolvedValue({ data: { values: [] } });
+    await expect(
+      actualizarPerfilUsuario("nadie@bosca.cl", { nombre: "N", rut: "1-9", area: "x" }),
+    ).rejects.toThrow();
   });
 });

@@ -8,6 +8,8 @@ const usuarioAdmin: Usuario = {
   rol: "Administrador",
   activo: true,
   fechaAlta: "2026-06-01T00:00:00Z",
+  rut: "76.543.219-7",
+  area: "Operaciones",
 };
 
 describe("decidirAcceso", () => {
@@ -15,7 +17,12 @@ describe("decidirAcceso", () => {
     const r = decidirAcceso({ email: "maravena@bosca.cl", name: "M. Aravena", emailVerified: true }, usuarioAdmin);
     expect(r).toEqual({
       ok: true,
-      usuario: { email: "maravena@bosca.cl", nombre: "M. Aravena", rol: "Administrador" },
+      usuario: {
+        email: "maravena@bosca.cl",
+        nombre: "M. Aravena",
+        rol: "Administrador",
+        area: "Operaciones",
+      },
     });
   });
 
@@ -58,8 +65,8 @@ describe("decidirAcceso", () => {
 });
 
 describe("tieneRol", () => {
-  const sesionUsuario = { email: "u@bosca.cl", nombre: "U", rol: "Usuario" as const };
-  const sesionAdmin = { email: "a@bosca.cl", nombre: "A", rol: "Administrador" as const };
+  const sesionUsuario = { email: "u@bosca.cl", nombre: "U", rol: "Usuario" as const, area: "" };
+  const sesionAdmin = { email: "a@bosca.cl", nombre: "A", rol: "Administrador" as const, area: "" };
 
   it("cualquier sesión cumple el rol mínimo Usuario", () => {
     expect(tieneRol(sesionUsuario, "Usuario")).toBe(true);

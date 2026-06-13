@@ -41,6 +41,7 @@ export const GASTOS_HEADERS = [
   "imagen_drive_id",
   "estado",
   "fecha_creacion",
+  "usuario_area",
 ] as const;
 
 /** Convierte un Gasto en una fila (string[]) para escribir en Sheets. */
@@ -62,6 +63,7 @@ export function gastoToRow(g: Gasto): string[] {
     g.imagenDriveId,
     g.estado,
     g.fechaCreacion,
+    g.usuarioArea,
   ];
 }
 
@@ -106,6 +108,7 @@ export function rowToGasto(row: string[]): Gasto {
     imagenDriveId: cell(row, 13),
     estado: parseEstado(cell(row, 14)),
     fechaCreacion: cell(row, 15),
+    usuarioArea: cell(row, 16),
   };
 }
 
@@ -114,7 +117,7 @@ export async function listGastos(): Promise<Gasto[]> {
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Gastos!A2:P",
+    range: "Gastos!A2:Q",
   });
   const rows = res.data.values ?? [];
   return rows.map((r) => rowToGasto(r as string[]));
@@ -125,7 +128,7 @@ export async function appendGasto(g: Gasto): Promise<void> {
   const sheets = getSheetsClient();
   await sheets.spreadsheets.values.append({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Gastos!A2:P",
+    range: "Gastos!A2:Q",
     valueInputOption: "RAW",
     requestBody: { values: [gastoToRow(g)] },
   });
@@ -143,7 +146,56 @@ export function usuarioRowToUsuario(row: string[]): Usuario {
     rol: parseRol(cell(row, 2)),
     activo: cell(row, 3).toUpperCase() === "TRUE",
     fechaAlta: cell(row, 4),
+    rut: cell(row, 5),
+    area: cell(row, 6),
   };
+}
+
+/**
+ * Actualiza el perfil (nombre, rut, area) de un usuario en la pestaña Usuarios,
+ * preservando rol, activo y fecha_alta. Lanza si el usuario no existe.
+ */
+export async function actualizarPerfilUsuario(
+  email: string,
+  perfil: { nombre: string; rut: string; area: string },
+): Promise<void> {
+  const sheets = getSheetsClient();
+  const spreadsheetId = getEnv("GOOGLE_SHEETS_ID");
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: "Usuarios!A2:G",
+  });
+  const rows = (res.data.values ?? []) as string[][];
+  const idx = rows.findIndex((r) => (r[0] ?? "").toLowerCase() === email.toLowerCase());
+  if (idx === -1) throw new Error("Usuario no encontrado");
+  const fila = rows[idx];
+  const filaActualizada = [
+    fila[0] ?? email, // email
+    perfil.nombre, // nombre
+    fila[2] ?? "Usuario", // rol (preservado)
+    fila[3] ?? "TRUE", // activo (preservado)
+    fila[4] ?? "", // fecha_alta (preservada)
+    perfil.rut, // rut
+    perfil.area, // area
+  ];
+  const numeroFila = idx + 2; // fila 1 = encabezados
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `Usuarios!A${numeroFila}:G${numeroFila}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [filaActualizada] },
+  });
+}
+
+/** Lee las áreas de trabajo válidas de la pestaña Areas (columna A, desde fila 2). */
+export async function listarAreas(): Promise<string[]> {
+  const sheets = getSheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
+    range: "Areas!A2:A",
+  });
+  const rows = (res.data.values ?? []) as string[][];
+  return rows.map((r) => (r[0] ?? "").trim()).filter((a) => a !== "");
 }
 
 /**
@@ -154,7 +206,7 @@ export async function getUsuario(email: string): Promise<Usuario | null> {
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Usuarios!A2:E",
+    range: "Usuarios!A2:G",
   });
   const rows = (res.data.values ?? []) as string[][];
   const match = rows

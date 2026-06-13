@@ -21,6 +21,7 @@ function gasto(email: string, id: string): Gasto {
     imagenDriveId: "",
     estado: "Registrado",
     fechaCreacion: "",
+    usuarioArea: "",
   };
 }
 
@@ -32,11 +33,11 @@ const gastos: Gasto[] = [
 
 describe("filtrarGastosPorRol", () => {
   it("un Administrador ve todos los gastos", () => {
-    const admin: SesionUsuario = { email: "jefe@bosca.cl", nombre: "Jefe", rol: "Administrador" };
+    const admin: SesionUsuario = { email: "jefe@bosca.cl", nombre: "Jefe", rol: "Administrador", area: "" };
     expect(filtrarGastosPorRol(gastos, admin)).toHaveLength(3);
   });
   it("un Usuario ve solo sus gastos (match por email, case-insensitive)", () => {
-    const usuario: SesionUsuario = { email: "MARAVENA@bosca.cl", nombre: "M", rol: "Usuario" };
+    const usuario: SesionUsuario = { email: "MARAVENA@bosca.cl", nombre: "M", rol: "Usuario", area: "" };
     const r = filtrarGastosPorRol(gastos, usuario);
     expect(r.map((g) => g.id)).toEqual(["g1", "g3"]);
   });
