@@ -151,6 +151,17 @@ export function usuarioRowToUsuario(row: string[]): Usuario {
   };
 }
 
+/** Lee las áreas de trabajo válidas de la pestaña Areas (columna A, desde fila 2). */
+export async function listarAreas(): Promise<string[]> {
+  const sheets = getSheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
+    range: "Areas!A2:A",
+  });
+  const rows = (res.data.values ?? []) as string[][];
+  return rows.map((r) => (r[0] ?? "").trim()).filter((a) => a !== "");
+}
+
 /**
  * Busca un usuario por email (case-insensitive). Devuelve null si no existe
  * o si está inactivo (activo=FALSE).

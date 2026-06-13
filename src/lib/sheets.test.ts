@@ -118,7 +118,7 @@ describe("appendGasto", () => {
   });
 });
 
-import { getUsuario, usuarioRowToUsuario } from "./sheets";
+import { getUsuario, usuarioRowToUsuario, listarAreas } from "./sheets";
 
 describe("usuarioRowToUsuario", () => {
   it("mapea una fila a Usuario y parsea activo", () => {
@@ -140,6 +140,19 @@ describe("usuarioRowToUsuario", () => {
   it("rol desconocido cae a Usuario", () => {
     const u = usuarioRowToUsuario(["x@bosca.cl", "X", "jefe", "TRUE", ""]);
     expect(u.rol).toBe("Usuario");
+  });
+});
+
+describe("listarAreas", () => {
+  it("devuelve las áreas no vacías de la pestaña Areas", async () => {
+    valuesGet.mockResolvedValue({
+      data: { values: [["Operaciones"], ["Mantención"], [""], ["Comercial"]] },
+    });
+    expect(await listarAreas()).toEqual(["Operaciones", "Mantención", "Comercial"]);
+  });
+  it("devuelve [] si no hay áreas", async () => {
+    valuesGet.mockResolvedValue({ data: {} });
+    expect(await listarAreas()).toEqual([]);
   });
 });
 
