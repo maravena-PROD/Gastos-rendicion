@@ -16,7 +16,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }, [cargando, user, router]);
 
   if (cargando) {
-    return <div className="flex min-h-screen items-center justify-center">Cargando…</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bosca-crema text-sm text-gray-500">
+        Cargando…
+      </div>
+    );
   }
   if (!user) {
     return null; // redirigiendo
