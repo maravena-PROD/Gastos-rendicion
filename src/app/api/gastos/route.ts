@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { getBearerToken } from "@/lib/auth";
 import { autenticar } from "@/lib/auth-server";
-import { listGastos, appendGasto } from "@/lib/sheets";
+import { listGastos, appendGasto, listarCentrosCosto } from "@/lib/sheets";
+import { resolverImputacion } from "@/lib/centros-costo";
 import { crearGasto } from "@/lib/gasto-factory";
 import { filtrarGastosPorRol } from "@/lib/gastos-rol";
-import { IMPUTACION_VACIA, type Imputacion } from "@/lib/types";
 import { normalizarCategoria } from "@/lib/extraccion";
 
 export async function GET(req: Request) {
@@ -39,7 +39,9 @@ export async function POST(req: Request) {
     observacion?: string;
     imagenUrl?: string;
     imagenDriveId?: string;
-    imputacion?: Imputacion;
+    centroCostoCodigo?: string;
+    areaCodigo?: string;
+    ubicacionCodigo?: string;
   };
   try {
     body = await req.json();
@@ -62,6 +64,32 @@ export async function POST(req: Request) {
     );
   }
 
+  if (!body.centroCostoCodigo || !body.areaCodigo || !body.ubicacionCodigo) {
+    return NextResponse.json(
+      { error: "Falta la imputación: centro de costo, área y ubicación" },
+      { status: 400 },
+    );
+  }
+
+  let imputacion;
+  try {
+    const catalogo = await listarCentrosCosto();
+    imputacion = resolverImputacion(
+      catalogo,
+      body.centroCostoCodigo,
+      body.areaCodigo,
+      body.ubicacionCodigo,
+    );
+  } catch {
+    return NextResponse.json({ error: "No se pudo validar la imputación" }, { status: 502 });
+  }
+  if (!imputacion) {
+    return NextResponse.json(
+      { error: "La combinación de centro de costo / área / ubicación no es válida" },
+      { status: 400 },
+    );
+  }
+
   const gasto = crearGasto({
     usuarioEmail: auth.usuario.email,
     usuarioNombre: auth.usuario.nombre,
@@ -76,7 +104,7 @@ export async function POST(req: Request) {
     imagenUrl: body.imagenUrl,
     imagenDriveId: body.imagenDriveId,
     usuarioArea: auth.usuario.area,
-    imputacion: { ...IMPUTACION_VACIA, ...(body.imputacion ?? {}) },
+    imputacion,
   });
 
   try {
