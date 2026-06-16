@@ -10,9 +10,11 @@ import {
   subirBoleta,
   guardarGasto,
   obtenerPerfil,
+  obtenerCentrosCosto,
   type GuardarGastoInput,
   type Perfil,
 } from "@/lib/api-client";
+import type { CentroCostoEntry } from "@/lib/types";
 import { reducirImagen } from "@/lib/imagen";
 import {
   fusionarExtraccion,
@@ -51,11 +53,18 @@ function Chat({ perfil }: { perfil: Perfil }) {
   const [borrador, setBorrador] = useState<ExtraccionGasto>(EXTRACCION_VACIA);
   const [imagen, setImagen] = useState<{ url: string; id: string } | null>(null);
   const [procesando, setProcesando] = useState(false);
+  const [catalogoCC, setCatalogoCC] = useState<CentroCostoEntry[]>([]);
   const finRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     finRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensajes]);
+
+  useEffect(() => {
+    obtenerCentrosCosto()
+      .then(({ centros }) => setCatalogoCC(centros))
+      .catch(() => {});
+  }, []);
 
   function agregarBot(texto: string) {
     setMensajes((m) => [...m, { tipo: "texto", autor: "bot", texto }]);
@@ -194,6 +203,7 @@ function Chat({ perfil }: { perfil: Perfil }) {
                 borrador={m.borrador}
                 imagenUrl={m.imagenUrl}
                 imagenDriveId={m.imagenDriveId}
+                catalogo={catalogoCC}
                 onConfirmar={onConfirmar}
                 onCancelar={onCancelar}
                 deshabilitado={procesando}
