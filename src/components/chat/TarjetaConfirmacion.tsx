@@ -5,11 +5,14 @@ import { CATEGORIAS, type Categoria } from "@/lib/types";
 import type { ExtraccionGasto } from "@/lib/extraccion";
 import { parseCLP, formatCLP, formatRut } from "@/lib/format";
 import type { GuardarGastoInput } from "@/lib/api-client";
+import { centrosCosto, areasDe, ubicacionesDe } from "@/lib/centros-costo";
+import type { CentroCostoEntry } from "@/lib/types";
 
 export function TarjetaConfirmacion({
   borrador,
   imagenUrl,
   imagenDriveId,
+  catalogo,
   onConfirmar,
   onCancelar,
   deshabilitado,
@@ -17,6 +20,7 @@ export function TarjetaConfirmacion({
   borrador: ExtraccionGasto;
   imagenUrl?: string;
   imagenDriveId?: string;
+  catalogo: CentroCostoEntry[];
   onConfirmar: (datos: GuardarGastoInput) => void;
   onCancelar: () => void;
   deshabilitado: boolean;
@@ -29,9 +33,17 @@ export function TarjetaConfirmacion({
   const [categoria, setCategoria] = useState<string>(borrador.categoria ?? "");
   const [observacion, setObservacion] = useState("");
 
+  const [cc, setCc] = useState("");
+  const [area, setArea] = useState("");
+  const [ubicacion, setUbicacion] = useState("");
+
+  const opcionesCc = centrosCosto(catalogo);
+  const opcionesArea = cc ? areasDe(catalogo, cc) : [];
+  const opcionesUbic = cc && area ? ubicacionesDe(catalogo, cc, area) : [];
+
   const monto = parseCLP(montoTexto);
   const completo =
-    comercio.trim() !== "" && monto !== null && monto > 0 && fecha !== "" && categoria !== "";
+    comercio.trim() !== "" && monto !== null && monto > 0 && fecha !== "" && categoria !== "" && cc !== "" && area !== "" && ubicacion !== "";
 
   function confirmar() {
     if (!completo || categoria === "" || monto === null) return;
@@ -46,6 +58,9 @@ export function TarjetaConfirmacion({
       observacion: observacion.trim() || undefined,
       imagenUrl,
       imagenDriveId,
+      centroCostoCodigo: cc,
+      areaCodigo: area,
+      ubicacionCodigo: ubicacion,
     });
   }
 
@@ -90,6 +105,60 @@ export function TarjetaConfirmacion({
             {CATEGORIAS.map((c) => (
               <option key={c} value={c}>
                 {c}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs text-gray-500">
+          Centro de costo
+          <select
+            className="mt-1 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
+            value={cc}
+            onChange={(e) => {
+              setCc(e.target.value);
+              setArea("");
+              setUbicacion("");
+            }}
+          >
+            <option value="">Selecciona…</option>
+            {opcionesCc.map((o) => (
+              <option key={o.codigo} value={o.codigo}>
+                {o.codigo} · {o.detalle}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs text-gray-500">
+          Área
+          <select
+            className="mt-1 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon disabled:opacity-50"
+            value={area}
+            disabled={!cc}
+            onChange={(e) => {
+              setArea(e.target.value);
+              setUbicacion("");
+            }}
+          >
+            <option value="">Selecciona…</option>
+            {opcionesArea.map((o) => (
+              <option key={o.codigo} value={o.codigo}>
+                {o.codigo} · {o.detalle}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs text-gray-500">
+          Ubicación
+          <select
+            className="mt-1 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon disabled:opacity-50"
+            value={ubicacion}
+            disabled={!area}
+            onChange={(e) => setUbicacion(e.target.value)}
+          >
+            <option value="">Selecciona…</option>
+            {opcionesUbic.map((o) => (
+              <option key={o.codigo} value={o.codigo}>
+                {o.codigo} · {o.detalle}
               </option>
             ))}
           </select>
