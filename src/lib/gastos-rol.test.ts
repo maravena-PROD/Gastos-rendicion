@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { filtrarGastosPorRol } from "./gastos-rol";
+import { IMPUTACION_VACIA } from "./types";
 import type { Gasto } from "./types";
 import type { SesionUsuario } from "./auth";
 
@@ -22,14 +23,7 @@ function gasto(email: string, id: string): Gasto {
     estado: "Registrado",
     fechaCreacion: "",
     usuarioArea: "",
-    imputacion: {
-      centroCostoCodigo: "",
-      centroCostoDetalle: "",
-      areaCodigo: "",
-      areaDetalle: "",
-      ubicacionCodigo: "",
-      ubicacionDetalle: "",
-    },
+    imputacion: IMPUTACION_VACIA,
   };
 }
 

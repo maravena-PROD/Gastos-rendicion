@@ -8,6 +8,7 @@ import {
   contarPendientes,
   mesesDisponibles,
 } from "./dashboard";
+import { IMPUTACION_VACIA } from "./types";
 import type { Gasto } from "./types";
 
 function g(parcial: Partial<Gasto>): Gasto {
@@ -29,14 +30,7 @@ function g(parcial: Partial<Gasto>): Gasto {
     estado: "Registrado",
     fechaCreacion: "",
     usuarioArea: "",
-    imputacion: {
-      centroCostoCodigo: "",
-      centroCostoDetalle: "",
-      areaCodigo: "",
-      areaDetalle: "",
-      ubicacionCodigo: "",
-      ubicacionDetalle: "",
-    },
+    imputacion: IMPUTACION_VACIA,
     ...parcial,
   };
 }
