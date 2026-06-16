@@ -13,7 +13,7 @@ import {
   type GuardarGastoInput,
   type Perfil,
 } from "@/lib/api-client";
-import { fileABase64 } from "@/lib/imagen";
+import { reducirImagen } from "@/lib/imagen";
 import {
   fusionarExtraccion,
   camposFaltantes,
@@ -100,9 +100,9 @@ function Chat({ perfil }: { perfil: Perfil }) {
     agregarUsuario("📎 (boleta adjunta)");
     setProcesando(true);
     try {
-      const base64 = await fileABase64(file);
+      const { base64, nombre } = await reducirImagen(file);
       const [sub, ext] = await Promise.all([
-        subirBoleta(base64, file.name),
+        subirBoleta(base64, nombre),
         extraerDesdeImagen(base64),
       ]);
       const img = { url: sub.url, id: sub.id };

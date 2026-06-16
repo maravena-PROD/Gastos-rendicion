@@ -2,7 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { CATEGORIAS } from "./types";
 import { normalizarCategoria, type ExtraccionGasto } from "./extraccion";
 
-const MODELO = "claude-opus-4-8";
+// OCR + extracción estructurada de boletas. Haiku 4.5 es ~5x más barato que
+// Opus y suficiente para esta tarea; soporta visión y output_config.format.
+// Si la precisión baja en boletas difíciles, subir a "claude-sonnet-4-6".
+const MODELO = "claude-haiku-4-5";
 
 const SYSTEM_EXTRACCION = `Eres un asistente de rendición de gastos para una empresa chilena.
 Tu tarea es extraer los datos de un gasto a partir de texto o de una foto de boleta/factura.
