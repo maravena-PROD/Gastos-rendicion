@@ -43,6 +43,10 @@ describe("ubicacionesDe", () => {
       { codigo: "T9510", detalle: "Casa Matriz" },
     ]);
   });
+  it("devuelve [] para un (cc, área) inexistente", () => {
+    expect(ubicacionesDe(catalogo, "C9999", "A1010")).toEqual([]);
+    expect(ubicacionesDe(catalogo, "C0100", "A9999")).toEqual([]);
+  });
 });
 
 describe("resolverImputacion", () => {
@@ -66,5 +70,15 @@ describe("esCombinacionValida", () => {
   it("true para válida, false para inválida", () => {
     expect(esCombinacionValida(catalogo, "C0100", "A1030", "T9510")).toBe(true);
     expect(esCombinacionValida(catalogo, "C0100", "A1030", "T9005")).toBe(false);
+  });
+});
+
+describe("distintos (guard de código vacío)", () => {
+  it("ignora entradas con código vacío", () => {
+    const conVacios: CentroCostoEntry[] = [
+      { ccCodigo: "", ccDetalle: "sin codigo", areaCodigo: "", areaDetalle: "", ubicacionCodigo: "", ubicacionDetalle: "" },
+      { ccCodigo: "C0100", ccDetalle: "Gcia. Operaciones", areaCodigo: "A1010", areaDetalle: "G.Oper - Gerencia", ubicacionCodigo: "T9510", ubicacionDetalle: "Casa Matriz" },
+    ];
+    expect(centrosCosto(conVacios)).toEqual([{ codigo: "C0100", detalle: "Gcia. Operaciones" }]);
   });
 });
