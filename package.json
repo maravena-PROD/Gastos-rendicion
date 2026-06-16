@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verificar": "node --env-file=.env.local scripts/verificar-config.mjs",
-    "creditos": "node --env-file=.env.local scripts/revisar-creditos.mjs"
+    "creditos": "node --env-file=.env.local scripts/revisar-creditos.mjs",
+    "cargar-centros": "node --env-file=.env.local scripts/cargar-centros-costo.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
@@ -32,6 +33,7 @@
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "xlsx": "^0.18.5"
   }
 }
