@@ -46,6 +46,9 @@ describe("guardarGasto", () => {
       monto: 45000,
       categoria: "Combustible",
       fechaDocumento: "2026-06-10",
+      centroCostoCodigo: "CC01",
+      areaCodigo: "A01",
+      ubicacionCodigo: "U01",
     });
     expect(r.gasto.id).toBe("g_1");
     const [url, opts] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];

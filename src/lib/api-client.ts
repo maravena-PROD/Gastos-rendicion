@@ -1,6 +1,6 @@
 import { getIdTokenActual } from "./firebase-client";
 import type { ExtraccionGasto } from "./extraccion";
-import type { Gasto, Categoria } from "./types";
+import type { Gasto, Categoria, CentroCostoEntry } from "./types";
 
 /** Respuesta de las rutas de extracción. */
 export interface RespuestaExtraccion {
@@ -20,6 +20,9 @@ export interface GuardarGastoInput {
   observacion?: string;
   imagenUrl?: string;
   imagenDriveId?: string;
+  centroCostoCodigo: string;
+  areaCodigo: string;
+  ubicacionCodigo: string;
 }
 
 /** Hace una petición autenticada y lanza si la respuesta no es OK. */
@@ -75,6 +78,11 @@ export function guardarGasto(payload: GuardarGastoInput): Promise<{ gasto: Gasto
 /** Lista los gastos visibles para el usuario actual (filtrados por rol en el servidor). */
 export function obtenerGastos(): Promise<{ gastos: Gasto[] }> {
   return pedir<{ gastos: Gasto[] }>("/api/gastos", { method: "GET" });
+}
+
+/** Catálogo de imputación (centro de costo / área / ubicación). */
+export function obtenerCentrosCosto(): Promise<{ centros: CentroCostoEntry[] }> {
+  return pedir<{ centros: CentroCostoEntry[] }>("/api/centros-costo", { method: "GET" });
 }
 
 /** Perfil del usuario + áreas disponibles. */
