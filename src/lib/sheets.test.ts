@@ -144,7 +144,7 @@ describe("appendGasto", () => {
   });
 });
 
-import { getUsuario, usuarioRowToUsuario, listarAreas, actualizarPerfilUsuario } from "./sheets";
+import { getUsuario, usuarioRowToUsuario, listarAreas, actualizarPerfilUsuario, listarCentrosCosto } from "./sheets";
 
 describe("usuarioRowToUsuario", () => {
   it("mapea una fila a Usuario y parsea activo", () => {
@@ -249,5 +249,34 @@ describe("actualizarPerfilUsuario", () => {
     await expect(
       actualizarPerfilUsuario("nadie@bosca.cl", { nombre: "N", rut: "1-9", area: "x" }),
     ).rejects.toThrow();
+  });
+});
+
+describe("listarCentrosCosto", () => {
+  it("mapea las filas de CentrosCosto a CentroCostoEntry", async () => {
+    valuesGet.mockResolvedValue({
+      data: {
+        values: [
+          ["C0100", "Gcia. Operaciones", "A1010", "G.Oper - Gerencia", "T9510", "Casa Matriz"],
+          ["", "", "", "", "", ""],
+        ],
+      },
+    });
+    const r = await listarCentrosCosto();
+    expect(r).toEqual([
+      {
+        ccCodigo: "C0100",
+        ccDetalle: "Gcia. Operaciones",
+        areaCodigo: "A1010",
+        areaDetalle: "G.Oper - Gerencia",
+        ubicacionCodigo: "T9510",
+        ubicacionDetalle: "Casa Matriz",
+      },
+    ]);
+  });
+
+  it("devuelve [] si no hay filas", async () => {
+    valuesGet.mockResolvedValue({ data: {} });
+    expect(await listarCentrosCosto()).toEqual([]);
   });
 });

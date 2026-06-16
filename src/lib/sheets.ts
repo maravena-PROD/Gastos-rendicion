@@ -1,4 +1,4 @@
-import type { Gasto, Categoria, EstadoGasto, Usuario, Rol } from "./types";
+import type { Gasto, Categoria, EstadoGasto, Usuario, Rol, CentroCostoEntry } from "./types";
 import { CATEGORIAS } from "./types";
 import { google } from "googleapis";
 
@@ -216,6 +216,26 @@ export async function listarAreas(): Promise<string[]> {
   });
   const rows = (res.data.values ?? []) as string[][];
   return rows.map((r) => (r[0] ?? "").trim()).filter((a) => a !== "");
+}
+
+/** Lee el catálogo de imputación de la pestaña CentrosCosto (A2:F, desde fila 2). */
+export async function listarCentrosCosto(): Promise<CentroCostoEntry[]> {
+  const sheets = getSheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
+    range: "CentrosCosto!A2:F",
+  });
+  const rows = (res.data.values ?? []) as string[][];
+  return rows
+    .filter((r) => (r[0] ?? "").trim() !== "")
+    .map((r) => ({
+      ccCodigo: cell(r, 0),
+      ccDetalle: cell(r, 1),
+      areaCodigo: cell(r, 2),
+      areaDetalle: cell(r, 3),
+      ubicacionCodigo: cell(r, 4),
+      ubicacionDetalle: cell(r, 5),
+    }));
 }
 
 /**
