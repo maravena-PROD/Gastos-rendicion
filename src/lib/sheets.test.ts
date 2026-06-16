@@ -46,6 +46,14 @@ const gasto: Gasto = {
   estado: "Registrado",
   fechaCreacion: "2026-06-11T14:32:05Z",
   usuarioArea: "Operaciones",
+  imputacion: {
+    centroCostoCodigo: "C0100",
+    centroCostoDetalle: "Gcia. Operaciones",
+    areaCodigo: "A1010",
+    areaDetalle: "G.Oper - Gerencia",
+    ubicacionCodigo: "T9510",
+    ubicacionDetalle: "Casa Matriz",
+  },
 };
 
 describe("gastoToRow / rowToGasto", () => {
@@ -54,8 +62,10 @@ describe("gastoToRow / rowToGasto", () => {
     expect(row[0]).toBe("g_a1b2c3");
     expect(row[8]).toBe("Combustible");
     expect(row[9]).toBe("45000"); // monto como string
-    expect(row.length).toBe(17);
+    expect(row.length).toBe(23);
     expect(row[16]).toBe("Operaciones");
+    expect(row[17]).toBe("C0100");
+    expect(row[22]).toBe("Casa Matriz");
   });
 
   it("es ida y vuelta (round-trip)", () => {
@@ -79,6 +89,19 @@ describe("gastoToRow / rowToGasto", () => {
     const row = gastoToRow(gasto);
     row[9] = "no-es-numero";
     expect(rowToGasto(row).monto).toBe(0);
+  });
+
+  it("rowToGasto deja imputación vacía en filas históricas (sin esas columnas)", () => {
+    const row = gastoToRow(gasto).slice(0, 17); // fila vieja: solo hasta usuario_area
+    const parsed = rowToGasto(row);
+    expect(parsed.imputacion).toEqual({
+      centroCostoCodigo: "",
+      centroCostoDetalle: "",
+      areaCodigo: "",
+      areaDetalle: "",
+      ubicacionCodigo: "",
+      ubicacionDetalle: "",
+    });
   });
 });
 

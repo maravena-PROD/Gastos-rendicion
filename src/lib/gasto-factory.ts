@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import type { Gasto, Categoria } from "./types";
+import type { Gasto, Categoria, Imputacion } from "./types";
 
 /** Datos mínimos para crear un gasto; el resto se rellena con defaults. */
 export interface NuevoGastoInput {
@@ -16,6 +16,7 @@ export interface NuevoGastoInput {
   imagenUrl?: string;
   imagenDriveId?: string;
   usuarioArea?: string;
+  imputacion: Imputacion;
 }
 
 /** Arma un Gasto completo a partir de los datos extraídos, con id y timestamps. */
@@ -39,5 +40,6 @@ export function crearGasto(input: NuevoGastoInput): Gasto {
     estado: "Registrado",
     fechaCreacion: ahora,
     usuarioArea: input.usuarioArea ?? "",
+    imputacion: input.imputacion,
   };
 }

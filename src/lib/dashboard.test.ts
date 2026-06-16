@@ -29,6 +29,14 @@ function g(parcial: Partial<Gasto>): Gasto {
     estado: "Registrado",
     fechaCreacion: "",
     usuarioArea: "",
+    imputacion: {
+      centroCostoCodigo: "",
+      centroCostoDetalle: "",
+      areaCodigo: "",
+      areaDetalle: "",
+      ubicacionCodigo: "",
+      ubicacionDetalle: "",
+    },
     ...parcial,
   };
 }

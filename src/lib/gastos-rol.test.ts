@@ -22,6 +22,14 @@ function gasto(email: string, id: string): Gasto {
     estado: "Registrado",
     fechaCreacion: "",
     usuarioArea: "",
+    imputacion: {
+      centroCostoCodigo: "",
+      centroCostoDetalle: "",
+      areaCodigo: "",
+      areaDetalle: "",
+      ubicacionCodigo: "",
+      ubicacionDetalle: "",
+    },
   };
 }
 

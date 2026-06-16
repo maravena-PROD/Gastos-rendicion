@@ -9,6 +9,14 @@ describe("crearGasto", () => {
     comercio: "Copec",
     categoria: "Combustible" as const,
     monto: 45000,
+    imputacion: {
+      centroCostoCodigo: "C0100",
+      centroCostoDetalle: "Gcia. Operaciones",
+      areaCodigo: "A1010",
+      areaDetalle: "G.Oper - Gerencia",
+      ubicacionCodigo: "T9510",
+      ubicacionDetalle: "Casa Matriz",
+    },
   };
 
   it("genera un id con prefijo g_", () => {

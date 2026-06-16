@@ -4,6 +4,7 @@ import { autenticar } from "@/lib/auth-server";
 import { listGastos, appendGasto } from "@/lib/sheets";
 import { crearGasto } from "@/lib/gasto-factory";
 import { filtrarGastosPorRol } from "@/lib/gastos-rol";
+import { IMPUTACION_VACIA } from "@/lib/types";
 import { normalizarCategoria } from "@/lib/extraccion";
 
 export async function GET(req: Request) {
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
     observacion?: string;
     imagenUrl?: string;
     imagenDriveId?: string;
+    imputacion?: import("@/lib/types").Imputacion;
   };
   try {
     body = await req.json();
@@ -74,6 +76,7 @@ export async function POST(req: Request) {
     imagenUrl: body.imagenUrl,
     imagenDriveId: body.imagenDriveId,
     usuarioArea: auth.usuario.area,
+    imputacion: body.imputacion ?? IMPUTACION_VACIA,
   });
 
   try {

@@ -31,6 +31,7 @@ export interface Gasto {
   estado: EstadoGasto;
   fechaCreacion: string; // ISO 8601
   usuarioArea: string; // área del usuario que registró (denormalizado para reportes)
+  imputacion: Imputacion; // centro de costo / área / ubicación elegidos en el gasto
 }
 
 export type Rol = "Administrador" | "Usuario";
@@ -43,4 +44,32 @@ export interface Usuario {
   fechaAlta: string; // ISO 8601
   rut: string;
   area: string;
+}
+
+export interface Imputacion {
+  centroCostoCodigo: string;
+  centroCostoDetalle: string;
+  areaCodigo: string;
+  areaDetalle: string;
+  ubicacionCodigo: string;
+  ubicacionDetalle: string;
+}
+
+export const IMPUTACION_VACIA: Imputacion = {
+  centroCostoCodigo: "",
+  centroCostoDetalle: "",
+  areaCodigo: "",
+  areaDetalle: "",
+  ubicacionCodigo: "",
+  ubicacionDetalle: "",
+};
+
+/** Una combinación válida del catálogo de imputación (pestaña CentrosCosto). */
+export interface CentroCostoEntry {
+  ccCodigo: string;
+  ccDetalle: string;
+  areaCodigo: string;
+  areaDetalle: string;
+  ubicacionCodigo: string;
+  ubicacionDetalle: string;
 }

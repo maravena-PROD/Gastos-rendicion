@@ -42,6 +42,12 @@ export const GASTOS_HEADERS = [
   "estado",
   "fecha_creacion",
   "usuario_area",
+  "centro_costo_codigo",
+  "centro_costo",
+  "area_codigo",
+  "area",
+  "ubicacion_codigo",
+  "ubicacion",
 ] as const;
 
 /** Convierte un Gasto en una fila (string[]) para escribir en Sheets. */
@@ -64,6 +70,12 @@ export function gastoToRow(g: Gasto): string[] {
     g.estado,
     g.fechaCreacion,
     g.usuarioArea,
+    g.imputacion.centroCostoCodigo,
+    g.imputacion.centroCostoDetalle,
+    g.imputacion.areaCodigo,
+    g.imputacion.areaDetalle,
+    g.imputacion.ubicacionCodigo,
+    g.imputacion.ubicacionDetalle,
   ];
 }
 
@@ -109,6 +121,14 @@ export function rowToGasto(row: string[]): Gasto {
     estado: parseEstado(cell(row, 14)),
     fechaCreacion: cell(row, 15),
     usuarioArea: cell(row, 16),
+    imputacion: {
+      centroCostoCodigo: cell(row, 17),
+      centroCostoDetalle: cell(row, 18),
+      areaCodigo: cell(row, 19),
+      areaDetalle: cell(row, 20),
+      ubicacionCodigo: cell(row, 21),
+      ubicacionDetalle: cell(row, 22),
+    },
   };
 }
 
@@ -117,7 +137,7 @@ export async function listGastos(): Promise<Gasto[]> {
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Gastos!A2:Q",
+    range: "Gastos!A2:W",
   });
   const rows = res.data.values ?? [];
   return rows.map((r) => rowToGasto(r as string[]));
@@ -128,7 +148,7 @@ export async function appendGasto(g: Gasto): Promise<void> {
   const sheets = getSheetsClient();
   await sheets.spreadsheets.values.append({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Gastos!A2:Q",
+    range: "Gastos!A2:W",
     valueInputOption: "RAW",
     requestBody: { values: [gastoToRow(g)] },
   });
