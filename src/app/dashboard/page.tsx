@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AuthGate } from "@/components/AuthGate";
 import { getIdTokenActual } from "@/lib/firebase-client";
-import { obtenerGastos } from "@/lib/api-client";
+import { obtenerGastos, obtenerGastoApi, type ResumenGastoApi } from "@/lib/api-client";
 import type { Gasto } from "@/lib/types";
 import {
   filtrarPorMes,
@@ -18,6 +18,10 @@ import {
 import { formatCLP } from "@/lib/format";
 import { GraficoCategorias } from "@/components/dashboard/GraficoCategorias";
 import { GraficoTendencia } from "@/components/dashboard/GraficoTendencia";
+import { GraficoGastoApi } from "@/components/dashboard/GraficoGastoApi";
+
+const usd = (v: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
 
 function Dashboard() {
   const [gastos, setGastos] = useState<Gasto[]>([]);
@@ -25,6 +29,7 @@ function Dashboard() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mesElegido, setMesElegido] = useState<string>("");
+  const [gastoApi, setGastoApi] = useState<ResumenGastoApi | null>(null);
 
   useEffect(() => {
     async function cargar() {
@@ -41,6 +46,11 @@ function Dashboard() {
       } finally {
         setCargando(false);
       }
+      // Panel de gasto de la API: solo aparece para el email autorizado.
+      // Mejor esfuerzo y aparte: un fallo aquí no debe romper el dashboard.
+      obtenerGastoApi()
+        .then(setGastoApi)
+        .catch(() => {});
     }
     cargar();
   }, []);
@@ -126,6 +136,17 @@ function Dashboard() {
               </>
             )}
           </>
+        )}
+
+        {!cargando && gastoApi && (
+          <section className="rounded-2xl border border-bosca-gris bg-white p-4">
+            <h2 className="text-sm font-semibold text-gray-700">Gasto de la API (Claude) · este mes</h2>
+            <p className="mt-1 text-3xl font-bold text-gray-900">{usd(gastoApi.totalUSD)}</p>
+            <p className="text-xs text-gray-400">Solo tú puedes ver este panel.</p>
+            <div className="mt-3">
+              <GraficoGastoApi datos={gastoApi.porDia} />
+            </div>
+          </section>
         )}
       </div>
     </div>

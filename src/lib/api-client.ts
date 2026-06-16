@@ -91,6 +91,26 @@ export function obtenerPerfil(): Promise<Perfil> {
   return pedir<Perfil>("/api/perfil", { method: "GET" });
 }
 
+/** Gasto de la API de Claude por día (este mes), en USD. */
+export interface ResumenGastoApi {
+  porDia: { fecha: string; montoUSD: number }[];
+  totalUSD: number;
+}
+
+/**
+ * Obtiene el gasto de la API de Claude del mes en curso. Devuelve null si no
+ * estás autorizado (403) o si no está configurado en el servidor — así el panel
+ * simplemente no se muestra, sin filtrar quién es el usuario autorizado.
+ */
+export async function obtenerGastoApi(): Promise<ResumenGastoApi | null> {
+  const token = await getIdTokenActual();
+  const res = await fetch("/api/costos-api", {
+    headers: { Authorization: `Bearer ${token ?? ""}` },
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as ResumenGastoApi;
+}
+
 /** Guarda el perfil (nombre, rut, area) del usuario actual. */
 export function guardarPerfil(perfil: {
   nombre: string;
