@@ -11,6 +11,7 @@ import {
   guardarGasto,
   obtenerPerfil,
   obtenerCentrosCosto,
+  obtenerAprobaciones,
   type GuardarGastoInput,
   type Perfil,
 } from "@/lib/api-client";
@@ -57,6 +58,7 @@ function Chat({ perfil }: { perfil: Perfil }) {
   const [imagen, setImagen] = useState<{ url: string; id: string } | null>(null);
   const [procesando, setProcesando] = useState(false);
   const [catalogoCC, setCatalogoCC] = useState<CentroCostoEntry[]>([]);
+  const [pendientes, setPendientes] = useState(0);
   const finRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,6 +70,13 @@ function Chat({ perfil }: { perfil: Perfil }) {
       .then(({ centros }) => setCatalogoCC(centros))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (perfil.apruebaCc.length === 0) return;
+    obtenerAprobaciones()
+      .then(({ gastos }) => setPendientes(gastos.length))
+      .catch(() => {});
+  }, [perfil.apruebaCc.length]);
 
   function agregarBot(texto: string) {
     setMensajes((m) => [...m, { tipo: "texto", autor: "bot", texto }]);
@@ -175,6 +184,14 @@ function Chat({ perfil }: { perfil: Perfil }) {
           <span>
             {perfil.nombre} · {perfil.area}
           </span>
+          {perfil.apruebaCc.length > 0 && (
+            <Link
+              href="/aprobaciones"
+              className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10"
+            >
+              Aprobaciones{pendientes > 0 ? ` (${pendientes})` : ""}
+            </Link>
+          )}
           <Link
             href="/dashboard"
             className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10"
