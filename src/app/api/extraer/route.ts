@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getBearerToken } from "@/lib/auth";
 import { autenticar } from "@/lib/auth-server";
 import { extraerDeTexto, extraerDeImagen } from "@/lib/claude";
-import { camposFaltantes } from "@/lib/extraccion";
+import { camposFaltantes, type ExtraccionGasto } from "@/lib/extraccion";
 import { validarImagen } from "@/lib/validacion-archivo";
 
 export async function POST(req: Request) {
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const auth = await autenticar(token);
   if (!auth.ok) return NextResponse.json({ error: auth.motivo }, { status: auth.status });
 
-  let body: { texto?: string; base64?: string };
+  let body: { texto?: string; base64?: string; borrador?: ExtraccionGasto };
   try {
     body = await req.json();
   } catch {
@@ -33,7 +33,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ extraccion, faltantes: camposFaltantes(extraccion) });
     }
     if (body.texto) {
-      const extraccion = await extraerDeTexto(body.texto);
+      const borrador = body.borrador;
+      const campoPreguntado = borrador ? (camposFaltantes(borrador)[0] ?? null) : null;
+      // Fecha de hoy en zona Chile (en-CA da formato AAAA-MM-DD) para fechas relativas.
+      const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Santiago" });
+      const extraccion = await extraerDeTexto(body.texto, { borrador, campoPreguntado, hoy });
       return NextResponse.json({ extraccion, faltantes: camposFaltantes(extraccion) });
     }
     return NextResponse.json({ error: "Envía texto o imagen" }, { status: 400 });

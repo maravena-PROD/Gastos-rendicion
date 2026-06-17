@@ -93,7 +93,7 @@ function Chat({ perfil }: { perfil: Perfil }) {
     agregarUsuario(texto);
     setProcesando(true);
     try {
-      const { extraccion } = await extraerDesdeTexto(texto);
+      const { extraccion } = await extraerDesdeTexto(texto, borrador);
       const fusion = fusionarExtraccion(borrador, extraccion);
       setBorrador(fusion);
       avanzar(fusion, imagen);

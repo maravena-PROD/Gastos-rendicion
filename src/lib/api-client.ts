@@ -43,11 +43,14 @@ async function pedir<T>(url: string, opciones: RequestInit): Promise<T> {
   return data as T;
 }
 
-/** Extrae datos de un gasto a partir de texto libre. */
-export function extraerDesdeTexto(texto: string): Promise<RespuestaExtraccion> {
+/** Extrae datos de un gasto a partir de texto libre, con el borrador en curso como contexto. */
+export function extraerDesdeTexto(
+  texto: string,
+  borrador?: ExtraccionGasto,
+): Promise<RespuestaExtraccion> {
   return pedir<RespuestaExtraccion>("/api/extraer", {
     method: "POST",
-    body: JSON.stringify({ texto }),
+    body: JSON.stringify({ texto, borrador }),
   });
 }
 
