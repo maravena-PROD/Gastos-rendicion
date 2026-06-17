@@ -74,3 +74,14 @@ export function porTipoRendicion(gastos: Gasto[]): { rendicion: number; devoluci
     { rendicion: 0, devolucion: 0 },
   );
 }
+
+/** Totales de los gastos Aprobados, separados por tipo de rendición. */
+export function aprobadosPorTipo(gastos: Gasto[]): { rendicion: number; devolucion: number; total: number } {
+  const t = porTipoRendicion(gastos.filter((g) => g.estado === "Aprobado"));
+  return { ...t, total: t.rendicion + t.devolucion };
+}
+
+/** Gastos en estado Rechazado. */
+export function rechazados(gastos: Gasto[]): Gasto[] {
+  return gastos.filter((g) => g.estado === "Rechazado");
+}
