@@ -49,5 +49,8 @@ export function crearGasto(input: NuevoGastoInput): Gasto {
     tipoDocumento: input.tipoDocumento,
     montoNeto: input.montoNeto ?? 0,
     iva: input.iva ?? 0,
+    aprobadoPor: "",
+    fechaDecision: "",
+    motivo: "",
   };
 }

@@ -87,6 +87,9 @@ export function gastoToRow(g: Gasto): string[] {
     g.tipoDocumento,
     String(g.montoNeto),
     String(g.iva),
+    g.aprobadoPor,
+    g.fechaDecision,
+    g.motivo,
   ];
 }
 
@@ -118,6 +121,12 @@ function parseTipoRendicion(v: string): TipoRendicion {
 
 function parseTipoDocumento(v: string): TipoDocumento {
   return v === "Boleta" || v === "Factura" || v === "Otro" ? v : "Otro";
+}
+
+function parseApruebaCc(v: string): string[] {
+  const s = v.trim();
+  if (s === "*") return ["*"];
+  return s.split(",").map((x) => x.trim()).filter((x) => x !== "");
 }
 
 /** Convierte una fila de Sheets en un Gasto. */
@@ -152,6 +161,9 @@ export function rowToGasto(row: string[]): Gasto {
     tipoDocumento: parseTipoDocumento(cell(row, 24)),
     montoNeto: parseMonto(cell(row, 25)),
     iva: parseMonto(cell(row, 26)),
+    aprobadoPor: cell(row, 27),
+    fechaDecision: cell(row, 28),
+    motivo: cell(row, 29),
   };
 }
 
@@ -160,7 +172,7 @@ export async function listGastos(): Promise<Gasto[]> {
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Gastos!A2:AA",
+    range: "Gastos!A2:AD",
   });
   const rows = res.data.values ?? [];
   return rows.map((r) => rowToGasto(r as string[]));
@@ -171,7 +183,7 @@ export async function appendGasto(g: Gasto): Promise<void> {
   const sheets = getSheetsClient();
   await sheets.spreadsheets.values.append({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Gastos!A2:AA",
+    range: "Gastos!A2:AD",
     valueInputOption: "RAW",
     requestBody: { values: [gastoToRow(g)] },
   });
@@ -193,6 +205,8 @@ export function usuarioRowToUsuario(row: string[]): Usuario {
     area: cell(row, 6),
     banco: cell(row, 7),
     cuentaCorriente: cell(row, 8),
+    apruebaCc: parseApruebaCc(cell(row, 9)),
+    cargo: cell(row, 10),
   };
 }
 
@@ -273,7 +287,7 @@ export async function getUsuario(email: string): Promise<Usuario | null> {
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Usuarios!A2:I",
+    range: "Usuarios!A2:K",
   });
   const rows = (res.data.values ?? []) as string[][];
   const match = rows

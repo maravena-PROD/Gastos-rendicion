@@ -28,6 +28,9 @@ function gasto(email: string, id: string): Gasto {
     tipoDocumento: "Boleta",
     montoNeto: 0,
     iva: 0,
+    aprobadoPor: "",
+    fechaDecision: "",
+    motivo: "",
   };
 }
 

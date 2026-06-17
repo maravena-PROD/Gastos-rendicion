@@ -12,6 +12,8 @@ const usuarioAdmin: Usuario = {
   area: "Operaciones",
   banco: "",
   cuentaCorriente: "",
+  apruebaCc: [],
+  cargo: "",
 };
 
 describe("decidirAcceso", () => {

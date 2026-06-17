@@ -58,6 +58,9 @@ const gasto: Gasto = {
   tipoDocumento: "Boleta",
   montoNeto: 0,
   iva: 0,
+  aprobadoPor: "",
+  fechaDecision: "",
+  motivo: "",
 };
 
 describe("gastoToRow / rowToGasto", () => {
@@ -66,7 +69,7 @@ describe("gastoToRow / rowToGasto", () => {
     expect(row[0]).toBe("g_a1b2c3");
     expect(row[8]).toBe("Combustible");
     expect(row[9]).toBe("45000"); // monto como string
-    expect(row.length).toBe(27);
+    expect(row.length).toBe(30);
     expect(row[16]).toBe("Operaciones");
     expect(row[17]).toBe("C0100");
     expect(row[22]).toBe("Casa Matriz");
@@ -129,6 +132,30 @@ describe("gastoToRow / rowToGasto", () => {
     expect(parsed.tipoDocumento).toBe("Otro");
     expect(parsed.montoNeto).toBe(0);
     expect(parsed.iva).toBe(0);
+  });
+
+  it("incluye aprobado_por, fecha_decision y motivo (AB:AD)", () => {
+    const decidido: Gasto = {
+      ...gasto,
+      estado: "Rechazado",
+      aprobadoPor: "gerente@bosca.cl",
+      fechaDecision: "2026-06-17T10:00:00Z",
+      motivo: "Falta boleta",
+    };
+    const row = gastoToRow(decidido);
+    expect(row.length).toBe(30);
+    expect(row[27]).toBe("gerente@bosca.cl");
+    expect(row[28]).toBe("2026-06-17T10:00:00Z");
+    expect(row[29]).toBe("Falta boleta");
+    expect(rowToGasto(row)).toEqual(decidido);
+  });
+
+  it("filas históricas sin AB:AD defaultean decisión a vacío", () => {
+    const row = gastoToRow(gasto).slice(0, 27); // sin las 3 nuevas
+    const parsed = rowToGasto(row);
+    expect(parsed.aprobadoPor).toBe("");
+    expect(parsed.fechaDecision).toBe("");
+    expect(parsed.motivo).toBe("");
   });
 });
 
@@ -209,6 +236,23 @@ describe("usuarioRowToUsuario", () => {
     const u = usuarioRowToUsuario(["x@bosca.cl", "X", "Usuario", "TRUE", ""]);
     expect(u.banco).toBe("");
     expect(u.cuentaCorriente).toBe("");
+  });
+
+  it("parsea aprueba_cc (lista) y cargo", () => {
+    const u = usuarioRowToUsuario([
+      "g@bosca.cl", "G", "Usuario", "TRUE", "", "1-9", "Comercial",
+      "", "", "C0200", "Gerente Comercial",
+    ]);
+    expect(u.apruebaCc).toEqual(["C0200"]);
+    expect(u.cargo).toBe("Gerente Comercial");
+  });
+
+  it("aprueba_cc '*' => ['*'] y vacío => []", () => {
+    const general = usuarioRowToUsuario(["g@bosca.cl","G","Usuario","TRUE","","1-9","x","","","*",""]);
+    expect(general.apruebaCc).toEqual(["*"]);
+    const normal = usuarioRowToUsuario(["n@bosca.cl","N","Usuario","TRUE",""]);
+    expect(normal.apruebaCc).toEqual([]);
+    expect(normal.cargo).toBe("");
   });
 });
 

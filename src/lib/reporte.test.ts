@@ -6,6 +6,7 @@ const usuario: Usuario = {
   email: "maravena@bosca.cl", nombre: "M. Aravena", rol: "Usuario", activo: true,
   fechaAlta: "", rut: "76.543.219-7", area: "Operaciones",
   banco: "Banco Santander", cuentaCorriente: "66788482",
+  apruebaCc: [], cargo: "",
 };
 
 function g(partial: Partial<Gasto>): Gasto {
@@ -19,6 +20,7 @@ function g(partial: Partial<Gasto>): Gasto {
       areaDetalle: "", ubicacionCodigo: "T9510", ubicacionDetalle: "",
     },
     tipoRendicion: "Rendicion", tipoDocumento: "Boleta", montoNeto: 0, iva: 0,
+    aprobadoPor: "", fechaDecision: "", motivo: "",
     ...partial,
   };
 }

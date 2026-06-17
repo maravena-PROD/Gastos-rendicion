@@ -23,6 +23,8 @@ const usuario: Usuario = {
   area: "Operaciones",
   banco: "",
   cuentaCorriente: "",
+  apruebaCc: [],
+  cargo: "",
 };
 
 beforeEach(() => {
