@@ -23,3 +23,11 @@ export function puedeAprobar(sesion: SesionUsuario, gasto: Gasto): boolean {
 export function gastosPorAprobar(gastos: Gasto[], sesion: SesionUsuario): Gasto[] {
   return gastos.filter((g) => puedeAprobar(sesion, g));
 }
+
+/** Solo el dueño puede editar/reenviar, y solo si el gasto está Rechazado. */
+export function puedeEditar(sesion: SesionUsuario, gasto: Gasto): boolean {
+  return (
+    gasto.estado === "Rechazado" &&
+    gasto.usuarioEmail.toLowerCase() === sesion.email.toLowerCase()
+  );
+}
