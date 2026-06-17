@@ -31,6 +31,7 @@ function Dashboard() {
   const [desde, setDesde] = useState<string>("");
   const [hasta, setHasta] = useState<string>("");
   const [gastoApi, setGastoApi] = useState<ResumenGastoApi | null>(null);
+  const [descargando, setDescargando] = useState(false);
 
   useEffect(() => {
     async function cargar() {
@@ -68,6 +69,28 @@ function Dashboard() {
   );
   const esAdmin = rol === "Administrador";
 
+  async function descargarReporte() {
+    setDescargando(true);
+    try {
+      const token = await getIdTokenActual();
+      const res = await fetch(`/api/reporte?desde=${desdeActivo}&hasta=${hastaActivo}`, {
+        headers: { Authorization: `Bearer ${token ?? ""}` },
+      });
+      if (!res.ok) throw new Error("Error al generar el PDF");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rendicion-${desdeActivo}_a_${hastaActivo}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("No se pudo generar el reporte PDF.");
+    } finally {
+      setDescargando(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between border-b border-bosca-carbon bg-bosca-carbon px-4 py-3">
@@ -104,6 +127,13 @@ function Dashboard() {
                 value={hastaActivo}
                 onChange={(e) => setHasta(e.target.value)}
               />
+              <button
+                onClick={descargarReporte}
+                disabled={descargando || delRango.length === 0}
+                className="rounded-lg bg-bosca-burdeo px-3 py-1 text-sm font-medium text-white hover:bg-bosca-burdeo-h disabled:opacity-40"
+              >
+                {descargando ? "Generando…" : "Descargar PDF"}
+              </button>
             </div>
 
             <section className="rounded-2xl border border-bosca-gris bg-white p-4">
