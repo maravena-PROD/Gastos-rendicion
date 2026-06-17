@@ -93,6 +93,8 @@ export interface Perfil {
   nombre: string;
   rut: string;
   area: string;
+  banco: string;
+  cuentaCorriente: string;
   completo: boolean;
   areas: string[];
 }
@@ -127,6 +129,8 @@ export function guardarPerfil(perfil: {
   nombre: string;
   rut: string;
   area: string;
+  banco?: string;
+  cuentaCorriente?: string;
 }): Promise<{ ok: boolean }> {
   return pedir<{ ok: boolean }>("/api/perfil", {
     method: "POST",

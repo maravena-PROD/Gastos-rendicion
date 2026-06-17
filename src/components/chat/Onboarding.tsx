@@ -16,6 +16,8 @@ export function Onboarding({
   const [nombre, setNombre] = useState(nombreInicial);
   const [rut, setRut] = useState("");
   const [area, setArea] = useState("");
+  const [banco, setBanco] = useState("");
+  const [cuentaCorriente, setCuentaCorriente] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +29,13 @@ export function Onboarding({
     setGuardando(true);
     setError(null);
     try {
-      await guardarPerfil({ nombre: nombre.trim(), rut, area });
+      await guardarPerfil({
+        nombre: nombre.trim(),
+        rut,
+        area,
+        banco: banco.trim() || undefined,
+        cuentaCorriente: cuentaCorriente.trim() || undefined,
+      });
       onListo();
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo guardar.");
@@ -77,6 +85,24 @@ export function Onboarding({
                 </option>
               ))}
             </select>
+          </label>
+          <label className="text-xs text-gray-500">
+            Banco (opcional, para devoluciones)
+            <input
+              className="mt-1 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
+              placeholder="Banco Santander"
+              value={banco}
+              onChange={(e) => setBanco(e.target.value)}
+            />
+          </label>
+          <label className="text-xs text-gray-500">
+            N° cuenta corriente (opcional)
+            <input
+              className="mt-1 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
+              placeholder="66788482"
+              value={cuentaCorriente}
+              onChange={(e) => setCuentaCorriente(e.target.value)}
+            />
           </label>
         </div>
         {error && <p className="mt-3 text-sm text-bosca-burdeo">{error}</p>}

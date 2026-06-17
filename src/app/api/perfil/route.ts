@@ -23,6 +23,8 @@ export async function GET(req: Request) {
       nombre: usuario.nombre,
       rut: usuario.rut,
       area: usuario.area,
+      banco: usuario.banco,
+      cuentaCorriente: usuario.cuentaCorriente,
       completo: perfilCompleto(usuario),
       areas,
     });
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
   const auth = await autenticar(token);
   if (!auth.ok) return NextResponse.json({ error: auth.motivo }, { status: auth.status });
 
-  let body: { nombre?: string; rut?: string; area?: string };
+  let body: { nombre?: string; rut?: string; area?: string; banco?: string; cuentaCorriente?: string };
   try {
     body = await req.json();
   } catch {
@@ -62,6 +64,8 @@ export async function POST(req: Request) {
       nombre: body.nombre.trim(),
       rut: formatRut(body.rut),
       area: body.area,
+      banco: typeof body.banco === "string" ? body.banco.trim() : undefined,
+      cuentaCorriente: typeof body.cuentaCorriente === "string" ? body.cuentaCorriente.trim() : undefined,
     });
     return NextResponse.json({ ok: true });
   } catch {
