@@ -26,8 +26,15 @@ describe("decidirAcceso", () => {
         nombre: "M. Aravena",
         rol: "Administrador",
         area: "Operaciones",
+        apruebaCc: ["*"], // Administrador => alcance total
       },
     });
+  });
+
+  it("un gerente conserva su alcance de aprobación", () => {
+    const gerente: Usuario = { ...usuarioAdmin, rol: "Usuario", apruebaCc: ["C0200"] };
+    const r = decidirAcceso({ email: "maravena@bosca.cl", name: "M", emailVerified: true }, gerente);
+    expect(r.ok && r.usuario.apruebaCc).toEqual(["C0200"]);
   });
 
   it("rechaza con 401 si el token no trae email", () => {
@@ -69,8 +76,8 @@ describe("decidirAcceso", () => {
 });
 
 describe("tieneRol", () => {
-  const sesionUsuario = { email: "u@bosca.cl", nombre: "U", rol: "Usuario" as const, area: "" };
-  const sesionAdmin = { email: "a@bosca.cl", nombre: "A", rol: "Administrador" as const, area: "" };
+  const sesionUsuario = { email: "u@bosca.cl", nombre: "U", rol: "Usuario" as const, area: "", apruebaCc: [] };
+  const sesionAdmin = { email: "a@bosca.cl", nombre: "A", rol: "Administrador" as const, area: "", apruebaCc: [] };
 
   it("cualquier sesión cumple el rol mínimo Usuario", () => {
     expect(tieneRol(sesionUsuario, "Usuario")).toBe(true);
