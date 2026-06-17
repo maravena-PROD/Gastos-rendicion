@@ -207,6 +207,7 @@ function Chat({ perfil }: { perfil: Perfil }) {
                 imagenUrl={m.imagenUrl}
                 imagenDriveId={m.imagenDriveId}
                 catalogo={catalogoCC}
+                cuentaActual={{ banco: perfil.banco, cuentaCorriente: perfil.cuentaCorriente }}
                 onConfirmar={onConfirmar}
                 onCancelar={onCancelar}
                 deshabilitado={procesando}

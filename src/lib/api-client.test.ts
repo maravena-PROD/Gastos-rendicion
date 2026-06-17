@@ -49,6 +49,10 @@ describe("guardarGasto", () => {
       centroCostoCodigo: "CC01",
       areaCodigo: "A01",
       ubicacionCodigo: "U01",
+      tipoRendicion: "Rendicion",
+      tipoDocumento: "Boleta",
+      montoNeto: 0,
+      iva: 0,
     });
     expect(r.gasto.id).toBe("g_1");
     const [url, opts] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];

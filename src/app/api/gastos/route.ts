@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { getBearerToken } from "@/lib/auth";
 import { autenticar } from "@/lib/auth-server";
-import { listGastos, appendGasto, listarCentrosCosto } from "@/lib/sheets";
+import { listGastos, appendGasto, listarCentrosCosto, actualizarPerfilUsuario, getUsuario } from "@/lib/sheets";
 import { resolverImputacion } from "@/lib/centros-costo";
 import { crearGasto } from "@/lib/gasto-factory";
 import { filtrarGastosPorRol } from "@/lib/gastos-rol";
 import { normalizarCategoria } from "@/lib/extraccion";
+import { calcularNetoIva } from "@/lib/montos";
+import type { TipoRendicion, TipoDocumento } from "@/lib/types";
 
 export async function GET(req: Request) {
   const token = getBearerToken(req);
@@ -42,6 +44,12 @@ export async function POST(req: Request) {
     centroCostoCodigo?: string;
     areaCodigo?: string;
     ubicacionCodigo?: string;
+    tipoRendicion?: string;
+    tipoDocumento?: string;
+    montoNeto?: number;
+    iva?: number;
+    banco?: string;
+    cuentaCorriente?: string;
   };
   try {
     body = await req.json();
@@ -90,6 +98,51 @@ export async function POST(req: Request) {
     );
   }
 
+  const tipoRendicion: TipoRendicion =
+    body.tipoRendicion === "Devolucion" ? "Devolucion" : "Rendicion";
+  const tipoDocumento: TipoDocumento =
+    body.tipoDocumento === "Boleta" || body.tipoDocumento === "Factura"
+      ? body.tipoDocumento
+      : "Otro";
+
+  // Devolución: exige cuenta corriente en el perfil; si viene en el payload, la persiste.
+  if (tipoRendicion === "Devolucion") {
+    let usuario;
+    try {
+      usuario = await getUsuario(auth.usuario.email);
+    } catch {
+      return NextResponse.json({ error: "No se pudo validar la cuenta corriente" }, { status: 502 });
+    }
+    const bancoNuevo = typeof body.banco === "string" ? body.banco.trim() : "";
+    const cuentaNueva = typeof body.cuentaCorriente === "string" ? body.cuentaCorriente.trim() : "";
+    const tienePerfil = !!usuario && usuario.banco.trim() !== "" && usuario.cuentaCorriente.trim() !== "";
+    const vieneEnPayload = bancoNuevo !== "" && cuentaNueva !== "";
+    if (!tienePerfil && !vieneEnPayload) {
+      return NextResponse.json(
+        { error: "Una devolución requiere banco y cuenta corriente" },
+        { status: 400 },
+      );
+    }
+    if (vieneEnPayload && usuario) {
+      try {
+        await actualizarPerfilUsuario(auth.usuario.email, {
+          nombre: usuario.nombre,
+          rut: usuario.rut,
+          area: usuario.area,
+          banco: bancoNuevo,
+          cuentaCorriente: cuentaNueva,
+        });
+      } catch {
+        return NextResponse.json({ error: "No se pudo guardar la cuenta corriente" }, { status: 502 });
+      }
+    }
+  }
+
+  const { neto, iva } = calcularNetoIva(body.monto, tipoDocumento, {
+    neto: typeof body.montoNeto === "number" ? body.montoNeto : null,
+    iva: typeof body.iva === "number" ? body.iva : null,
+  });
+
   const gasto = crearGasto({
     usuarioEmail: auth.usuario.email,
     usuarioNombre: auth.usuario.nombre,
@@ -105,6 +158,10 @@ export async function POST(req: Request) {
     imagenDriveId: body.imagenDriveId,
     usuarioArea: auth.usuario.area,
     imputacion,
+    tipoRendicion,
+    tipoDocumento,
+    montoNeto: neto,
+    iva,
   });
 
   try {

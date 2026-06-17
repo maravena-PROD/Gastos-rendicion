@@ -1,6 +1,6 @@
 import { getIdTokenActual } from "./firebase-client";
 import type { ExtraccionGasto } from "./extraccion";
-import type { Gasto, Categoria, CentroCostoEntry } from "./types";
+import type { Gasto, Categoria, CentroCostoEntry, TipoRendicion, TipoDocumento } from "./types";
 
 /** Respuesta de las rutas de extracción. */
 export interface RespuestaExtraccion {
@@ -23,6 +23,12 @@ export interface GuardarGastoInput {
   centroCostoCodigo: string;
   areaCodigo: string;
   ubicacionCodigo: string;
+  tipoRendicion: TipoRendicion;
+  tipoDocumento: TipoDocumento;
+  montoNeto: number;
+  iva: number;
+  banco?: string; // solo cuando se completa inline en una devolución
+  cuentaCorriente?: string;
 }
 
 /** Hace una petición autenticada y lanza si la respuesta no es OK. */
