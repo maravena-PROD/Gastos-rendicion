@@ -18,6 +18,9 @@ export function TarjetaConfirmacion({
   onConfirmar,
   onCancelar,
   deshabilitado,
+  inicial,
+  titulo,
+  textoConfirmar,
 }: {
   borrador: ExtraccionGasto;
   imagenUrl?: string;
@@ -27,8 +30,17 @@ export function TarjetaConfirmacion({
   onConfirmar: (datos: GuardarGastoInput) => void;
   onCancelar: () => void;
   deshabilitado: boolean;
+  inicial?: {
+    tipoRendicion?: TipoRendicion;
+    centroCostoCodigo?: string;
+    areaCodigo?: string;
+    ubicacionCodigo?: string;
+    observacion?: string;
+  };
+  titulo?: string;
+  textoConfirmar?: string;
 }) {
-  const [tipoRendicion, setTipoRendicion] = useState<TipoRendicion>("Rendicion");
+  const [tipoRendicion, setTipoRendicion] = useState<TipoRendicion>(inicial?.tipoRendicion ?? "Rendicion");
   const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>(
     borrador.tipoDocumento ?? "Boleta",
   );
@@ -47,11 +59,11 @@ export function TarjetaConfirmacion({
   );
   const [fecha, setFecha] = useState(borrador.fechaDocumento ?? "");
   const [categoria, setCategoria] = useState<string>(borrador.categoria ?? "");
-  const [observacion, setObservacion] = useState("");
+  const [observacion, setObservacion] = useState(inicial?.observacion ?? "");
 
-  const [cc, setCc] = useState("");
-  const [area, setArea] = useState("");
-  const [ubicacion, setUbicacion] = useState("");
+  const [cc, setCc] = useState(inicial?.centroCostoCodigo ?? "");
+  const [area, setArea] = useState(inicial?.areaCodigo ?? "");
+  const [ubicacion, setUbicacion] = useState(inicial?.ubicacionCodigo ?? "");
 
   const opcionesCc = centrosCosto(catalogo);
   const opcionesArea = cc ? areasDe(catalogo, cc) : [];
@@ -111,7 +123,7 @@ export function TarjetaConfirmacion({
 
   return (
     <div className="rounded-2xl border border-bosca-gris bg-white p-4 shadow-sm">
-      <h3 className="mb-3 text-sm font-semibold text-bosca-carbon">Revisa el gasto</h3>
+      <h3 className="mb-3 text-sm font-semibold text-bosca-carbon">{titulo ?? "Revisa el gasto"}</h3>
       <div className="flex flex-col gap-3">
         <label className="text-xs text-gray-500">
           Tipo
@@ -299,7 +311,7 @@ export function TarjetaConfirmacion({
           disabled={!completo || deshabilitado}
           className="flex-1 rounded-lg bg-bosca-burdeo px-4 py-2 text-sm font-medium text-white hover:bg-bosca-burdeo-h disabled:opacity-40"
         >
-          Confirmar registro
+          {textoConfirmar ?? "Confirmar registro"}
         </button>
         <button
           onClick={onCancelar}
