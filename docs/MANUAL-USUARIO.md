@@ -17,6 +17,22 @@ usarse desde el **celular** (aunque también funciona en computador).
 
 ---
 
+## 1.1. Completa tu perfil (solo la primera vez)
+
+La primera vez que entras (o si te falta algún dato), la app te muestra el formulario **"Completa tu
+perfil"** antes de dejarte usar el chat. Es rápido y se hace una sola vez:
+
+- **Nombre completo** (obligatorio).
+- **RUT** (obligatorio): se valida y se ordena solo (p. ej. `76.543.219-7`).
+- **Área de trabajo** (obligatorio): elígela del menú.
+- **Banco** y **N° cuenta corriente** (opcionales): solo se usan si pides que un gasto te lo
+  **reembolsen** (ver "Devolución" en la sección 4). Puedes dejarlos en blanco y agregarlos después.
+
+Toca **"Guardar y empezar"** y pasas al chat. Estos datos salen en tu **rendición en PDF**, por eso se
+piden al inicio.
+
+---
+
 ## 2. Registrar un gasto por texto
 
 Es la forma más rápida cuando no tienes la boleta a mano o quieres ir directo.
@@ -30,7 +46,8 @@ Es la forma más rápida cuando no tienes la boleta a mano o quieres ir directo.
    te preguntará: *"¿Cuál es la fecha del documento? (formato AAAA-MM-DD)"*.
 4. Responde cada pregunta hasta que el bot tenga todo lo esencial: **comercio, monto, categoría y
    fecha**.
-5. Aparecerá una **tarjeta de confirmación** (ver sección 4).
+5. Aparecerá una **tarjeta de confirmación** (ver sección 4). Ahí terminas de completar el resto
+   (tipo, documento, centro de costo) antes de guardar.
 
 ---
 
@@ -40,8 +57,7 @@ La forma recomendada: el bot lee la boleta por ti.
 
 1. Toca el botón **📷** (abajo a la izquierda).
 2. En el celular podrás **tomar una foto** con la cámara o **elegir una de la galería**.
-   - Formatos aceptados: **JPG y PNG**. (El PDF se acepta para guardar, pero para que el bot lea los
-     datos automáticamente usa una foto JPG/PNG.)
+   - Se aceptan **imágenes** (JPG, PNG). Para que el bot lea bien los datos, usa una foto de la boleta.
 3. El bot procesa la imagen (verás "Procesando…") y **extrae automáticamente**: comercio, monto,
    fecha, RUT del emisor, número de documento.
 4. Si algún dato esencial no se pudo leer, el bot te lo preguntará.
@@ -56,17 +72,29 @@ La forma recomendada: el bot lee la boleta por ti.
 Antes de guardar, siempre revisas una tarjeta con los datos. **Todos los campos son editables**, así
 que si el bot leyó algo mal, lo corriges aquí:
 
-- **Comercio**, **Monto**, **Fecha**: puedes editarlos directamente.
-- **Categoría**: elígela del menú desplegable. Las categorías son: Combustible, Alimentación,
-  Transporte, Peajes, Hospedaje, Materiales, Servicios, Otros.
+- **Tipo**: elige **"Rendición (solo justificar)"** o **"Devolución (me reembolsan)"**.
+  - Si eliges **Devolución**, aparecen abajo **Banco** y **N° cuenta corriente** (vienen de tu perfil,
+    pero puedes ajustarlos). Son obligatorios para registrar una devolución.
+- **Comercio**, **Monto**, **Fecha**: edítalos directamente. El monto puedes escribirlo como `45000`
+  o `$45.000`; ambos funcionan.
+- **Categoría**: del menú. Son: Combustible, Alimentación, Transporte, Peajes, Hospedaje, Materiales,
+  Servicios, Otros.
+- **Tipo de documento**: **Boleta**, **Factura** u **Otro**.
+- **Neto** e **IVA**: para **Factura** se calculan solos a partir del monto; puedes corregirlos.
+- **Centro de costo → Área → Ubicación** (obligatorios): se eligen en ese orden (al elegir el centro
+  de costo se habilita el área, y luego la ubicación). Sirven para imputar el gasto.
 - **Observación** (opcional): una nota libre, por ejemplo "Camioneta de la flota".
 - El **RUT del emisor** se muestra de referencia (si la boleta lo tenía).
 
 Cuando esté todo correcto:
-- Toca **"Confirmar registro"** → el gasto se guarda y verás **"✅ Registro completado"**.
+- Toca **"Confirmar registro"** → el gasto se guarda y verás **"✅ Gasto registrado."**.
 - O toca **"Cancelar"** si te equivocaste y quieres empezar de nuevo.
 
-El monto puedes escribirlo como `45000` o `$45.000`; ambos funcionan.
+Después de guardar, el bot te pregunta **"¿Deseas registrar otro?"**: toca **Sí** para seguir o
+**No** para terminar.
+
+> El botón "Confirmar registro" se mantiene deshabilitado hasta que estén todos los campos
+> obligatorios (incluidos centro de costo, área y ubicación).
 
 ---
 
@@ -74,8 +102,12 @@ El monto puedes escribirlo como `45000` o `$45.000`; ambos funcionan.
 
 Toca **"Dashboard"** en la parte superior. Ahí ves:
 
-- **Total del período**: cuánto se gastó en el mes seleccionado.
-- **Selector de período**: cambia el mes para ver otros.
+- **Período (Desde / Hasta)**: elige el rango de fechas con dos selectores; todo lo de abajo se
+  recalcula para ese rango.
+- **Descargar PDF**: genera tu **rendición en PDF** del rango elegido (con tus datos, el detalle de
+  cada gasto y los totales) y la descarga al instante.
+- **Total del período**: cuánto se gastó en el rango.
+- **Rendiciones vs Devoluciones**: cuánto es solo justificado y cuánto te deben reembolsar.
 - **Por categoría**: un gráfico de dona que muestra en qué se gasta más.
 - **Tendencia**: un gráfico de barras por día.
 
