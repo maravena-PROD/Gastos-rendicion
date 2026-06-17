@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AuthGate } from "@/components/AuthGate";
 import { getIdTokenActual } from "@/lib/firebase-client";
-import { obtenerGastos, obtenerGastoApi, obtenerAprobaciones, type ResumenGastoApi } from "@/lib/api-client";
-import type { Gasto } from "@/lib/types";
+import { obtenerGastos, obtenerGastoApi, obtenerAprobaciones, editarGasto, obtenerCentrosCosto, obtenerPerfil, type ResumenGastoApi, type GuardarGastoInput } from "@/lib/api-client";
+import type { Gasto, CentroCostoEntry } from "@/lib/types";
+import { TarjetaConfirmacion } from "@/components/chat/TarjetaConfirmacion";
 import {
   filtrarPorRango,
   porTipoRendicion,
@@ -36,6 +37,9 @@ function Dashboard() {
   const [hasta, setHasta] = useState<string>("");
   const [gastoApi, setGastoApi] = useState<ResumenGastoApi | null>(null);
   const [descargando, setDescargando] = useState(false);
+  const [catalogoCC, setCatalogoCC] = useState<CentroCostoEntry[]>([]);
+  const [cuenta, setCuenta] = useState({ banco: "", cuentaCorriente: "" });
+  const [editando, setEditando] = useState<Gasto | null>(null);
 
   useEffect(() => {
     async function cargar() {
@@ -61,6 +65,8 @@ function Dashboard() {
       obtenerGastoApi()
         .then(setGastoApi)
         .catch(() => {});
+      obtenerCentrosCosto().then(({ centros }) => setCatalogoCC(centros)).catch(() => {});
+      obtenerPerfil().then((p) => setCuenta({ banco: p.banco, cuentaCorriente: p.cuentaCorriente })).catch(() => {});
     }
     cargar();
   }, []);
@@ -215,7 +221,12 @@ function Dashboard() {
                                 {g.fechaDocumento} · {g.comercio} · {formatCLP(g.monto)}
                                 {g.motivo ? ` — ${g.motivo}` : ""}
                               </span>
-                              {/* El botón "Corregir" se conecta en la Task 8 */}
+                              <button
+                                onClick={() => setEditando(g)}
+                                className="shrink-0 rounded-lg border border-bosca-gris px-3 py-1 text-xs text-bosca-carbon hover:bg-bosca-gris"
+                              >
+                                Corregir
+                              </button>
                             </li>
                           ))}
                         </ul>
@@ -270,6 +281,51 @@ function Dashboard() {
           </section>
         )}
       </div>
+
+      {editando && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
+          <div className="w-full max-w-md">
+            <TarjetaConfirmacion
+              borrador={{
+                comercio: editando.comercio,
+                monto: editando.monto,
+                fechaDocumento: editando.fechaDocumento,
+                categoria: editando.categoria,
+                rutEmisor: editando.rutEmisor || null,
+                numeroDocumento: editando.numeroDocumento || null,
+                direccion: editando.direccion || null,
+                tipoDocumento: editando.tipoDocumento,
+                montoNeto: editando.montoNeto,
+                iva: editando.iva,
+              }}
+              inicial={{
+                tipoRendicion: editando.tipoRendicion,
+                centroCostoCodigo: editando.imputacion.centroCostoCodigo,
+                areaCodigo: editando.imputacion.areaCodigo,
+                ubicacionCodigo: editando.imputacion.ubicacionCodigo,
+                observacion: editando.observacion,
+              }}
+              imagenUrl={editando.imagenUrl || undefined}
+              imagenDriveId={editando.imagenDriveId || undefined}
+              catalogo={catalogoCC}
+              cuentaActual={cuenta}
+              titulo="Corregir gasto"
+              textoConfirmar="Reenviar"
+              deshabilitado={false}
+              onConfirmar={async (datos: GuardarGastoInput) => {
+                try {
+                  await editarGasto(editando.id, datos);
+                  setGastos((xs) => xs.map((x) => (x.id === editando.id ? { ...x, estado: "Registrado" } : x)));
+                  setEditando(null);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "No se pudo reenviar el gasto.");
+                }
+              }}
+              onCancelar={() => setEditando(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
