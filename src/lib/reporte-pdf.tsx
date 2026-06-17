@@ -1,6 +1,21 @@
-import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, View, Text, StyleSheet, Font } from "@react-pdf/renderer";
 import type { ModeloReporte } from "./reporte";
 import { formatCLP } from "./format";
+
+// Desactivamos la hyphenación automática: por defecto @react-pdf parte palabras
+// con patrones en inglés (genera cortes erróneos como "descrip-ción") e inserta
+// guiones. Devolviendo la palabra intacta, el texto solo salta de línea entre
+// espacios.
+Font.registerHyphenationCallback((palabra) => [palabra]);
+
+// Los folios largos sin espacios (p. ej. "597053013994A2491504") no tienen
+// dónde cortar, así que @react-pdf los parte por la fuerza con un guión que
+// confunde el número. Insertamos un espacio cada 14 caracteres en tokens muy
+// largos (>= 16) para que envuelvan limpio, sin guión. Se aplica SOLO a folios
+// (no a texto natural, donde partiría palabras españolas largas).
+function envolverTokensLargos(texto: string): string {
+  return texto.replace(/\S{16,}/g, (token) => token.replace(/(.{14})/g, "$1 "));
+}
 
 const styles = StyleSheet.create({
   page: { padding: 24, fontSize: 8, fontFamily: "Helvetica" },
@@ -16,22 +31,24 @@ const styles = StyleSheet.create({
   num: { textAlign: "right" },
 });
 
-type ColDef = { k: string; t: string; w: number; num?: boolean };
+type ColDef = { k: string; t: string; w: number; num?: boolean; wrap?: boolean };
 
-// Anchos en puntos por columna (suman < ancho útil de A4 horizontal).
+// Anchos en puntos por columna. Suman ~782, justo bajo el ancho útil de A4
+// horizontal (~794 = 841.89 - 2*24 de padding), para aprovechar todo el ancho
+// sin desbordar la página.
 const cols: ColDef[] = [
-  { k: "fechaCompra", t: "Fecha", w: 44 },
-  { k: "proveedor", t: "Proveedor", w: 64 },
-  { k: "centroCosto", t: "C.Costo", w: 38 },
-  { k: "area", t: "Área", w: 36 },
-  { k: "ubicacion", t: "Ubic.", w: 36 },
-  { k: "tipoDocumento", t: "Tipo", w: 38 },
-  { k: "numeroDocumento", t: "N° Doc", w: 60 },
-  { k: "descripcion", t: "Descripción", w: 92 },
-  { k: "neto", t: "Neto", w: 46, num: true },
-  { k: "iva", t: "IVA", w: 42, num: true },
-  { k: "total", t: "Total", w: 50, num: true },
-  { k: "tipoRendicion", t: "Tipo rend.", w: 52 },
+  { k: "fechaCompra", t: "Fecha", w: 46 },
+  { k: "proveedor", t: "Proveedor", w: 112 },
+  { k: "centroCosto", t: "C.Costo", w: 40 },
+  { k: "area", t: "Área", w: 38 },
+  { k: "ubicacion", t: "Ubic.", w: 38 },
+  { k: "tipoDocumento", t: "Tipo", w: 36 },
+  { k: "numeroDocumento", t: "N° Doc", w: 88, wrap: true },
+  { k: "descripcion", t: "Descripción", w: 162 },
+  { k: "neto", t: "Neto", w: 56, num: true },
+  { k: "iva", t: "IVA", w: 50, num: true },
+  { k: "total", t: "Total", w: 62, num: true },
+  { k: "tipoRendicion", t: "Tipo rend.", w: 54 },
 ];
 
 export function ReporteDocument({ modelo }: { modelo: ModeloReporte }) {
@@ -60,7 +77,11 @@ export function ReporteDocument({ modelo }: { modelo: ModeloReporte }) {
           <View key={i} style={styles.fila}>
             {cols.map((c) => {
               const raw = f[c.k as keyof typeof f];
-              const val = c.num ? formatCLP(Number(raw)) : String(raw);
+              const val = c.num
+                ? formatCLP(Number(raw))
+                : c.wrap
+                  ? envolverTokensLargos(String(raw))
+                  : String(raw);
               return (
                 <View key={c.k} style={[styles.celda, { width: c.w }]}>
                   <Text style={c.num ? styles.num : undefined}>{val}</Text>
