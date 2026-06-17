@@ -189,6 +189,26 @@ export async function appendGasto(g: Gasto): Promise<void> {
   });
 }
 
+/** Reescribe la fila de un gasto (localizada por id en col A) con su estado y decisión. */
+export async function actualizarDecisionGasto(gasto: Gasto): Promise<void> {
+  const sheets = getSheetsClient();
+  const spreadsheetId = getEnv("GOOGLE_SHEETS_ID");
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: "Gastos!A2:AD",
+  });
+  const rows = (res.data.values ?? []) as string[][];
+  const idx = rows.findIndex((r) => (r[0] ?? "") === gasto.id);
+  if (idx === -1) throw new Error("Gasto no encontrado");
+  const numeroFila = idx + 2; // fila 1 = encabezados
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `Gastos!A${numeroFila}:AD${numeroFila}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [gastoToRow(gasto)] },
+  });
+}
+
 function parseRol(v: string): Rol {
   return v === "Administrador" ? "Administrador" : "Usuario";
 }
