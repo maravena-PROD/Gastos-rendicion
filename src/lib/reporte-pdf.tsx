@@ -10,26 +10,28 @@ const styles = StyleSheet.create({
   cabEtq: { width: 90, fontWeight: "bold" },
   fila: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#999" },
   filaCab: { flexDirection: "row", backgroundColor: "#eee", borderBottomWidth: 1, borderBottomColor: "#333" },
-  celda: { padding: 3, borderRightWidth: 0.5, borderRightColor: "#ccc" },
+  // overflow hidden: el contenido se mantiene dentro de su columna y nunca
+  // invade la celda vecina (folios largos antes se desbordaban).
+  celda: { padding: 3, borderRightWidth: 0.5, borderRightColor: "#ccc", overflow: "hidden" },
   num: { textAlign: "right" },
 });
 
 type ColDef = { k: string; t: string; w: number; num?: boolean };
 
-// Anchos relativos (suman ~100) por columna.
+// Anchos en puntos por columna (suman < ancho útil de A4 horizontal).
 const cols: ColDef[] = [
-  { k: "fechaCompra", t: "Fecha", w: 42 },
-  { k: "proveedor", t: "Proveedor", w: 70 },
+  { k: "fechaCompra", t: "Fecha", w: 44 },
+  { k: "proveedor", t: "Proveedor", w: 64 },
   { k: "centroCosto", t: "C.Costo", w: 38 },
-  { k: "area", t: "Área", w: 38 },
-  { k: "ubicacion", t: "Ubic.", w: 38 },
-  { k: "tipoDocumento", t: "Tipo", w: 40 },
-  { k: "numeroDocumento", t: "N° Doc", w: 45 },
-  { k: "descripcion", t: "Descripción", w: 90 },
-  { k: "neto", t: "Neto", w: 45, num: true },
-  { k: "iva", t: "IVA", w: 40, num: true },
+  { k: "area", t: "Área", w: 36 },
+  { k: "ubicacion", t: "Ubic.", w: 36 },
+  { k: "tipoDocumento", t: "Tipo", w: 38 },
+  { k: "numeroDocumento", t: "N° Doc", w: 60 },
+  { k: "descripcion", t: "Descripción", w: 92 },
+  { k: "neto", t: "Neto", w: 46, num: true },
+  { k: "iva", t: "IVA", w: 42, num: true },
   { k: "total", t: "Total", w: 50, num: true },
-  { k: "tipoRendicion", t: "Tipo rend.", w: 50 },
+  { k: "tipoRendicion", t: "Tipo rend.", w: 52 },
 ];
 
 export function ReporteDocument({ modelo }: { modelo: ModeloReporte }) {
@@ -49,7 +51,9 @@ export function ReporteDocument({ modelo }: { modelo: ModeloReporte }) {
 
         <View style={styles.filaCab}>
           {cols.map((c) => (
-            <Text key={c.k} style={[styles.celda, { width: c.w }, c.num ? styles.num : {}]}>{c.t}</Text>
+            <View key={c.k} style={[styles.celda, { width: c.w }]}>
+              <Text style={c.num ? styles.num : undefined}>{c.t}</Text>
+            </View>
           ))}
         </View>
         {filas.map((f, i) => (
@@ -58,7 +62,9 @@ export function ReporteDocument({ modelo }: { modelo: ModeloReporte }) {
               const raw = f[c.k as keyof typeof f];
               const val = c.num ? formatCLP(Number(raw)) : String(raw);
               return (
-                <Text key={c.k} style={[styles.celda, { width: c.w }, c.num ? styles.num : {}]}>{val}</Text>
+                <View key={c.k} style={[styles.celda, { width: c.w }]}>
+                  <Text style={c.num ? styles.num : undefined}>{val}</Text>
+                </View>
               );
             })}
           </View>
