@@ -24,6 +24,10 @@ function gasto(email: string, id: string): Gasto {
     fechaCreacion: "",
     usuarioArea: "",
     imputacion: IMPUTACION_VACIA,
+    tipoRendicion: "Rendicion",
+    tipoDocumento: "Boleta",
+    montoNeto: 0,
+    iva: 0,
   };
 }
 
