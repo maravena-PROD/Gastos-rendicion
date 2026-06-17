@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   normalizarCategoria,
+  normalizarTipoDocumento,
   camposFaltantes,
   extraccionCompleta,
   hayDatosEsenciales,
@@ -33,6 +34,9 @@ const vacia: ExtraccionGasto = {
   rutEmisor: null,
   numeroDocumento: null,
   direccion: null,
+  tipoDocumento: null,
+  montoNeto: null,
+  iva: null,
 };
 
 const completa: ExtraccionGasto = {
@@ -115,5 +119,18 @@ describe("fusionarExtraccion", () => {
   it("un valor nuevo gana sobre uno previo", () => {
     const r = fusionarExtraccion({ ...vacia, comercio: "Copec" }, { ...vacia, comercio: "Shell" });
     expect(r.comercio).toBe("Shell");
+  });
+});
+
+describe("normalizarTipoDocumento", () => {
+  it("reconoce boleta y factura en cualquier caja", () => {
+    expect(normalizarTipoDocumento("BOLETA")).toBe("Boleta");
+    expect(normalizarTipoDocumento("factura")).toBe("Factura");
+    expect(normalizarTipoDocumento("Boleta electrónica")).toBe("Boleta");
+  });
+
+  it("devuelve null cuando no reconoce", () => {
+    expect(normalizarTipoDocumento(null)).toBe(null);
+    expect(normalizarTipoDocumento("vale vista")).toBe(null);
   });
 });

@@ -35,6 +35,9 @@ const EXTRACCION_VACIA: ExtraccionGasto = {
   rutEmisor: null,
   numeroDocumento: null,
   direccion: null,
+  tipoDocumento: null,
+  montoNeto: null,
+  iva: null,
 };
 
 type Mensaje =

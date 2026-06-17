@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { CATEGORIAS } from "./types";
-import { normalizarCategoria, type ExtraccionGasto } from "./extraccion";
+import { normalizarCategoria, normalizarTipoDocumento, type ExtraccionGasto } from "./extraccion";
 
 // OCR + extracción estructurada de boletas. Haiku 4.5 es ~5x más barato que
 // Opus y suficiente para esta tarea; soporta visión y output_config.format.
@@ -16,6 +16,9 @@ Reglas:
 - "monto" es un entero en pesos chilenos (CLP), sin puntos de miles ni decimales (45000, no "45.000").
 - "fechaDocumento" en formato AAAA-MM-DD.
 - "rutEmisor" con formato chileno (ej. 76.543.219-7) si aparece.
+- "tipoDocumento" debe ser "Boleta" o "Factura" según el documento; null si no se distingue.
+- "monto" es el TOTAL a pagar (con IVA incluido).
+- "montoNeto" e "iva" son enteros CLP si aparecen desglosados en el documento; si no aparecen, null.
 - Si un dato no aparece o no estás seguro, devuelve null. NUNCA inventes datos.`;
 
 /** JSON schema de la extracción (todos los campos nullable). */
@@ -29,6 +32,9 @@ const SCHEMA = {
     rutEmisor: { type: ["string", "null"] },
     numeroDocumento: { type: ["string", "null"] },
     direccion: { type: ["string", "null"] },
+    tipoDocumento: { type: ["string", "null"] },
+    montoNeto: { type: ["integer", "null"] },
+    iva: { type: ["integer", "null"] },
   },
   required: [
     "comercio",
@@ -38,6 +44,9 @@ const SCHEMA = {
     "rutEmisor",
     "numeroDocumento",
     "direccion",
+    "tipoDocumento",
+    "montoNeto",
+    "iva",
   ],
   additionalProperties: false,
 } as const;
@@ -69,6 +78,9 @@ export function parseExtraccion(res: { content: Array<{ type: string; text?: str
     rutEmisor: datos.rutEmisor ?? null,
     numeroDocumento: datos.numeroDocumento ?? null,
     direccion: datos.direccion ?? null,
+    tipoDocumento: normalizarTipoDocumento(datos.tipoDocumento ?? null),
+    montoNeto: aMontoEntero(datos.montoNeto),
+    iva: aMontoEntero(datos.iva),
   };
 }
 

@@ -1,4 +1,4 @@
-import type { Categoria } from "./types";
+import type { Categoria, TipoDocumento } from "./types";
 import { CATEGORIAS } from "./types";
 
 /** Datos extraídos de un gasto (texto o imagen). null = no detectado. */
@@ -10,6 +10,18 @@ export interface ExtraccionGasto {
   rutEmisor: string | null;
   numeroDocumento: string | null;
   direccion: string | null;
+  tipoDocumento: TipoDocumento | null;
+  montoNeto: number | null; // entero CLP
+  iva: number | null; // entero CLP
+}
+
+/** Convierte texto libre a un TipoDocumento válido, o null. */
+export function normalizarTipoDocumento(valor: string | null): TipoDocumento | null {
+  if (!valor) return null;
+  const limpio = valor.trim().toLowerCase();
+  if (limpio.includes("boleta")) return "Boleta";
+  if (limpio.includes("factura")) return "Factura";
+  return null;
 }
 
 /** Convierte un texto de categoría a una Categoria válida, o null. */
