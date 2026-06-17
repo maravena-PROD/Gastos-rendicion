@@ -130,7 +130,7 @@ export async function obtenerGastoApi(): Promise<ResumenGastoApi | null> {
   return (await res.json()) as ResumenGastoApi;
 }
 
-/** Guarda el perfil (nombre, rut, area) del usuario actual. */
+/** Guarda el perfil (nombre, rut, area y, opcionalmente, banco y cuenta corriente) del usuario actual. */
 export function guardarPerfil(perfil: {
   nombre: string;
   rut: string;

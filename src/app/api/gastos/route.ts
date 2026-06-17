@@ -139,8 +139,8 @@ export async function POST(req: Request) {
   }
 
   const { neto, iva } = calcularNetoIva(body.monto, tipoDocumento, {
-    neto: typeof body.montoNeto === "number" ? body.montoNeto : null,
-    iva: typeof body.iva === "number" ? body.iva : null,
+    neto: typeof body.montoNeto === "number" && Number.isFinite(body.montoNeto) && body.montoNeto >= 0 ? body.montoNeto : null,
+    iva: typeof body.iva === "number" && Number.isFinite(body.iva) && body.iva >= 0 ? body.iva : null,
   });
 
   const gasto = crearGasto({
