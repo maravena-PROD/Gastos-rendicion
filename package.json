@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "verificar": "node --env-file=.env.local scripts/verificar-config.mjs",
     "creditos": "node --env-file=.env.local scripts/revisar-creditos.mjs",
-    "cargar-centros": "node --env-file=.env.local scripts/cargar-centros-costo.mjs"
+    "cargar-centros": "node --env-file=.env.local scripts/cargar-centros-costo.mjs",
+    "migrar-encabezados": "node --env-file=.env.local scripts/migrar-encabezados.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
