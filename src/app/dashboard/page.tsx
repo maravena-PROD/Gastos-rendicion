@@ -216,11 +216,13 @@ function Dashboard() {
                       ) : (
                         <ul className="divide-y">
                           {rech.map((g) => (
-                            <li key={g.id} className="flex items-center justify-between gap-2 py-1.5">
-                              <span className="min-w-0 flex-1 truncate text-gray-700">
-                                {g.fechaDocumento} · {g.comercio} · {formatCLP(g.monto)}
-                                {g.motivo ? ` — ${g.motivo}` : ""}
-                              </span>
+                            <li key={g.id} className="flex items-start justify-between gap-2 py-1.5">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-gray-700">
+                                  {g.fechaDocumento} · {g.comercio} · {formatCLP(g.monto)}
+                                </p>
+                                {g.motivo && <p className="text-xs text-bosca-burdeo">Motivo: {g.motivo}</p>}
+                              </div>
                               <button
                                 onClick={() => setEditando(g)}
                                 className="shrink-0 rounded-lg border border-bosca-gris px-3 py-1 text-xs text-bosca-carbon hover:bg-bosca-gris"
