@@ -32,4 +32,18 @@ describe("asegurarCuentaDevolucion", () => {
     expect(r).toEqual({ ok: true });
     expect(actualizar).toHaveBeenCalledWith("u@bosca.cl", expect.objectContaining({ banco: "BCI", cuentaCorriente: "999" }));
   });
+  it("502 si getUsuario lanza", async () => {
+    const r = await asegurarCuentaDevolucion("u@bosca.cl", {}, {
+      getUsuario: async () => { throw new Error("red"); },
+      actualizarPerfilUsuario: vi.fn(),
+    });
+    expect(r).toEqual({ ok: false, status: 502, error: "No se pudo validar la cuenta corriente" });
+  });
+  it("502 si actualizarPerfilUsuario lanza", async () => {
+    const r = await asegurarCuentaDevolucion("u@bosca.cl", { banco: "BCI", cuentaCorriente: "999" }, {
+      getUsuario: async () => usuario({}),
+      actualizarPerfilUsuario: async () => { throw new Error("io"); },
+    });
+    expect(r).toEqual({ ok: false, status: 502, error: "No se pudo guardar la cuenta corriente" });
+  });
 });
