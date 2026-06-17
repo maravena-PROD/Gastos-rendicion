@@ -1,4 +1,7 @@
-import type { Gasto, Categoria, EstadoGasto, Usuario, Rol, CentroCostoEntry } from "./types";
+import type {
+  Gasto, Categoria, EstadoGasto, Usuario, Rol, CentroCostoEntry,
+  TipoRendicion, TipoDocumento,
+} from "./types";
 import { CATEGORIAS } from "./types";
 import { google } from "googleapis";
 
@@ -48,6 +51,10 @@ export const GASTOS_HEADERS = [
   "area",
   "ubicacion_codigo",
   "ubicacion",
+  "tipo_rendicion",
+  "tipo_documento",
+  "monto_neto",
+  "iva",
 ] as const;
 
 /** Convierte un Gasto en una fila (string[]) para escribir en Sheets. */
@@ -76,6 +83,10 @@ export function gastoToRow(g: Gasto): string[] {
     g.imputacion.areaDetalle,
     g.imputacion.ubicacionCodigo,
     g.imputacion.ubicacionDetalle,
+    g.tipoRendicion,
+    g.tipoDocumento,
+    String(g.montoNeto),
+    String(g.iva),
   ];
 }
 
@@ -99,6 +110,14 @@ function parseEstado(v: string): EstadoGasto {
 function parseMonto(v: string): number {
   const n = parseInt(v, 10);
   return Number.isFinite(n) ? n : 0;
+}
+
+function parseTipoRendicion(v: string): TipoRendicion {
+  return v === "Devolucion" ? "Devolucion" : "Rendicion";
+}
+
+function parseTipoDocumento(v: string): TipoDocumento {
+  return v === "Boleta" || v === "Factura" || v === "Otro" ? v : "Otro";
 }
 
 /** Convierte una fila de Sheets en un Gasto. */
@@ -129,6 +148,10 @@ export function rowToGasto(row: string[]): Gasto {
       ubicacionCodigo: cell(row, 21),
       ubicacionDetalle: cell(row, 22),
     },
+    tipoRendicion: parseTipoRendicion(cell(row, 23)),
+    tipoDocumento: parseTipoDocumento(cell(row, 24)),
+    montoNeto: parseMonto(cell(row, 25)),
+    iva: parseMonto(cell(row, 26)),
   };
 }
 
@@ -137,7 +160,7 @@ export async function listGastos(): Promise<Gasto[]> {
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Gastos!A2:W",
+    range: "Gastos!A2:AA",
   });
   const rows = res.data.values ?? [];
   return rows.map((r) => rowToGasto(r as string[]));
@@ -148,7 +171,7 @@ export async function appendGasto(g: Gasto): Promise<void> {
   const sheets = getSheetsClient();
   await sheets.spreadsheets.values.append({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Gastos!A2:W",
+    range: "Gastos!A2:AA",
     valueInputOption: "RAW",
     requestBody: { values: [gastoToRow(g)] },
   });
@@ -168,6 +191,8 @@ export function usuarioRowToUsuario(row: string[]): Usuario {
     fechaAlta: cell(row, 4),
     rut: cell(row, 5),
     area: cell(row, 6),
+    banco: cell(row, 7),
+    cuentaCorriente: cell(row, 8),
   };
 }
 
@@ -177,13 +202,13 @@ export function usuarioRowToUsuario(row: string[]): Usuario {
  */
 export async function actualizarPerfilUsuario(
   email: string,
-  perfil: { nombre: string; rut: string; area: string },
+  perfil: { nombre: string; rut: string; area: string; banco?: string; cuentaCorriente?: string },
 ): Promise<void> {
   const sheets = getSheetsClient();
   const spreadsheetId = getEnv("GOOGLE_SHEETS_ID");
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: "Usuarios!A2:G",
+    range: "Usuarios!A2:I",
   });
   const rows = (res.data.values ?? []) as string[][];
   const idx = rows.findIndex((r) => (r[0] ?? "").toLowerCase() === email.toLowerCase());
@@ -197,11 +222,13 @@ export async function actualizarPerfilUsuario(
     fila[4] ?? "", // fecha_alta (preservada)
     perfil.rut, // rut
     perfil.area, // area
+    perfil.banco ?? fila[7] ?? "", // banco (preservado si no se envía)
+    perfil.cuentaCorriente ?? fila[8] ?? "", // cuenta_corriente (preservado si no se envía)
   ];
   const numeroFila = idx + 2; // fila 1 = encabezados
   await sheets.spreadsheets.values.update({
     spreadsheetId,
-    range: `Usuarios!A${numeroFila}:G${numeroFila}`,
+    range: `Usuarios!A${numeroFila}:I${numeroFila}`,
     valueInputOption: "RAW",
     requestBody: { values: [filaActualizada] },
   });
@@ -246,7 +273,7 @@ export async function getUsuario(email: string): Promise<Usuario | null> {
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Usuarios!A2:G",
+    range: "Usuarios!A2:I",
   });
   const rows = (res.data.values ?? []) as string[][];
   const match = rows

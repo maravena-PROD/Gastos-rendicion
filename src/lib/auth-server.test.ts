@@ -21,6 +21,8 @@ const usuario: Usuario = {
   fechaAlta: "",
   rut: "76.543.219-7",
   area: "Operaciones",
+  banco: "",
+  cuentaCorriente: "",
 };
 
 beforeEach(() => {

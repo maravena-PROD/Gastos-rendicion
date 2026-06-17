@@ -11,6 +11,8 @@ function usuario(parcial: Partial<Usuario>): Usuario {
     fechaAlta: "",
     rut: "",
     area: "",
+    banco: "",
+    cuentaCorriente: "",
     ...parcial,
   };
 }

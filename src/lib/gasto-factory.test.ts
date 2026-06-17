@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { crearGasto } from "./gasto-factory";
+import { IMPUTACION_VACIA } from "./types";
 
 describe("crearGasto", () => {
   const base = {
@@ -17,6 +18,8 @@ describe("crearGasto", () => {
       ubicacionCodigo: "T9510",
       ubicacionDetalle: "Casa Matriz",
     },
+    tipoRendicion: "Rendicion" as const,
+    tipoDocumento: "Boleta" as const,
   };
 
   it("genera un id con prefijo g_", () => {
@@ -49,5 +52,18 @@ describe("crearGasto", () => {
 
   it("genera ids distintos en llamadas sucesivas", () => {
     expect(crearGasto(base).id).not.toBe(crearGasto(base).id);
+  });
+
+  it("usa neto/iva 0 por defecto", () => {
+    const g = crearGasto({ ...base, imputacion: IMPUTACION_VACIA });
+    expect(g.montoNeto).toBe(0);
+    expect(g.iva).toBe(0);
+    expect(g.tipoRendicion).toBe("Rendicion");
+  });
+
+  it("propaga neto/iva cuando se entregan", () => {
+    const g = crearGasto({ ...base, imputacion: IMPUTACION_VACIA, tipoDocumento: "Factura", montoNeto: 37815, iva: 7185 });
+    expect(g.montoNeto).toBe(37815);
+    expect(g.iva).toBe(7185);
   });
 });

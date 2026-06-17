@@ -10,6 +10,8 @@ const usuarioAdmin: Usuario = {
   fechaAlta: "2026-06-01T00:00:00Z",
   rut: "76.543.219-7",
   area: "Operaciones",
+  banco: "",
+  cuentaCorriente: "",
 };
 
 describe("decidirAcceso", () => {

@@ -13,6 +13,10 @@ export type Categoria = (typeof CATEGORIAS)[number];
 
 export type EstadoGasto = "Registrado" | "Aprobado" | "Rechazado";
 
+export type TipoRendicion = "Rendicion" | "Devolucion";
+export type TipoDocumento = "Boleta" | "Factura" | "Otro";
+export const TIPOS_DOCUMENTO: TipoDocumento[] = ["Boleta", "Factura", "Otro"];
+
 export interface Gasto {
   id: string;
   fechaRegistro: string; // ISO 8601
@@ -32,6 +36,10 @@ export interface Gasto {
   fechaCreacion: string; // ISO 8601
   usuarioArea: string; // área del usuario que registró (denormalizado para reportes)
   imputacion: Imputacion; // centro de costo / área / ubicación elegidos en el gasto
+  tipoRendicion: TipoRendicion; // "Rendicion" (default) o "Devolucion"
+  tipoDocumento: TipoDocumento; // Boleta / Factura / Otro
+  montoNeto: number; // entero CLP; 0 si no aplica
+  iva: number; // entero CLP; 0 si no aplica
 }
 
 export type Rol = "Administrador" | "Usuario";
@@ -44,6 +52,8 @@ export interface Usuario {
   fechaAlta: string; // ISO 8601
   rut: string;
   area: string;
+  banco: string; // p. ej. "Banco Santander"; "" si no tiene
+  cuentaCorriente: string; // número de cuenta; "" si no tiene
 }
 
 export interface Imputacion {

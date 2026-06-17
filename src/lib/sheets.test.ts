@@ -54,6 +54,10 @@ const gasto: Gasto = {
     ubicacionCodigo: "T9510",
     ubicacionDetalle: "Casa Matriz",
   },
+  tipoRendicion: "Rendicion",
+  tipoDocumento: "Boleta",
+  montoNeto: 0,
+  iva: 0,
 };
 
 describe("gastoToRow / rowToGasto", () => {
@@ -62,10 +66,12 @@ describe("gastoToRow / rowToGasto", () => {
     expect(row[0]).toBe("g_a1b2c3");
     expect(row[8]).toBe("Combustible");
     expect(row[9]).toBe("45000"); // monto como string
-    expect(row.length).toBe(23);
+    expect(row.length).toBe(27);
     expect(row[16]).toBe("Operaciones");
     expect(row[17]).toBe("C0100");
     expect(row[22]).toBe("Casa Matriz");
+    expect(row[23]).toBe("Rendicion");
+    expect(row[24]).toBe("Boleta");
   });
 
   it("es ida y vuelta (round-trip)", () => {
@@ -102,6 +108,27 @@ describe("gastoToRow / rowToGasto", () => {
       ubicacionCodigo: "",
       ubicacionDetalle: "",
     });
+  });
+
+  it("round-trip preserva tipo de rendición, documento, neto e IVA", () => {
+    const factura: Gasto = {
+      ...gasto,
+      tipoRendicion: "Devolucion",
+      tipoDocumento: "Factura",
+      montoNeto: 37815,
+      iva: 7185,
+      monto: 45000,
+    };
+    expect(rowToGasto(gastoToRow(factura))).toEqual(factura);
+  });
+
+  it("filas históricas sin las columnas nuevas defaultean a Rendicion/Otro/0", () => {
+    const row = gastoToRow(gasto).slice(0, 17); // fila vieja: hasta usuario_area
+    const parsed = rowToGasto(row);
+    expect(parsed.tipoRendicion).toBe("Rendicion");
+    expect(parsed.tipoDocumento).toBe("Otro");
+    expect(parsed.montoNeto).toBe(0);
+    expect(parsed.iva).toBe(0);
   });
 });
 
@@ -166,6 +193,22 @@ describe("usuarioRowToUsuario", () => {
   it("rol desconocido cae a Usuario", () => {
     const u = usuarioRowToUsuario(["x@bosca.cl", "X", "jefe", "TRUE", ""]);
     expect(u.rol).toBe("Usuario");
+  });
+
+  it("mapea banco y cuenta corriente", () => {
+    const u = usuarioRowToUsuario([
+      "maravena@bosca.cl", "M. Aravena", "Usuario", "TRUE",
+      "2026-06-01T00:00:00Z", "76.543.219-7", "Operaciones",
+      "Banco Santander", "66788482",
+    ]);
+    expect(u.banco).toBe("Banco Santander");
+    expect(u.cuentaCorriente).toBe("66788482");
+  });
+
+  it("usuario sin columnas de banco deja banco/cuenta en vacío", () => {
+    const u = usuarioRowToUsuario(["x@bosca.cl", "X", "Usuario", "TRUE", ""]);
+    expect(u.banco).toBe("");
+    expect(u.cuentaCorriente).toBe("");
   });
 });
 
@@ -232,7 +275,7 @@ describe("actualizarPerfilUsuario", () => {
       requestBody: { values: string[][] };
     };
     // el usuario está en la 2ª fila de datos => fila 3 de la hoja
-    expect(arg.range).toBe("Usuarios!A3:G3");
+    expect(arg.range).toBe("Usuarios!A3:I3");
     expect(arg.requestBody.values[0]).toEqual([
       "maravena@bosca.cl",
       "M. Aravena",
@@ -241,6 +284,8 @@ describe("actualizarPerfilUsuario", () => {
       "2026-06-01", // fecha_alta preservada
       "76.543.219-7",
       "Operaciones",
+      "", // banco (vacío en la fila original)
+      "", // cuenta_corriente (vacío en la fila original)
     ]);
   });
 
