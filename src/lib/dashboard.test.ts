@@ -37,6 +37,9 @@ function g(parcial: Partial<Gasto>): Gasto {
     tipoDocumento: "Boleta",
     montoNeto: 0,
     iva: 0,
+    aprobadoPor: "",
+    fechaDecision: "",
+    motivo: "",
     ...parcial,
   };
 }
@@ -120,6 +123,7 @@ function gR(fechaDocumento: string, monto: number, tipoRendicion: "Rendicion" | 
       areaDetalle: "", ubicacionCodigo: "", ubicacionDetalle: "",
     },
     tipoRendicion, tipoDocumento: "Boleta", montoNeto: 0, iva: 0,
+    aprobadoPor: "", fechaDecision: "", motivo: "",
   };
 }
 

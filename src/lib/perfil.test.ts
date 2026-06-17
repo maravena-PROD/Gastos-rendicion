@@ -13,6 +13,8 @@ function usuario(parcial: Partial<Usuario>): Usuario {
     area: "",
     banco: "",
     cuentaCorriente: "",
+    apruebaCc: [],
+    cargo: "",
     ...parcial,
   };
 }

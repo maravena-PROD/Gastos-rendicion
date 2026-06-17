@@ -66,4 +66,11 @@ describe("crearGasto", () => {
     expect(g.montoNeto).toBe(37815);
     expect(g.iva).toBe(7185);
   });
+
+  it("inicializa la decisión vacía (aprobadoPor/fechaDecision/motivo)", () => {
+    const g = crearGasto(base);
+    expect(g.aprobadoPor).toBe("");
+    expect(g.fechaDecision).toBe("");
+    expect(g.motivo).toBe("");
+  });
 });

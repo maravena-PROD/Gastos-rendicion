@@ -40,6 +40,9 @@ export interface Gasto {
   tipoDocumento: TipoDocumento; // Boleta / Factura / Otro
   montoNeto: number; // entero CLP; 0 si no aplica
   iva: number; // entero CLP; 0 si no aplica
+  aprobadoPor: string; // email de quien decidió; "" si pendiente
+  fechaDecision: string; // ISO 8601; "" si pendiente
+  motivo: string; // motivo de la decisión (sobre todo rechazos); "" si no aplica
 }
 
 export type Rol = "Administrador" | "Usuario";
@@ -54,6 +57,8 @@ export interface Usuario {
   area: string;
   banco: string; // p. ej. "Banco Santander"; "" si no tiene
   cuentaCorriente: string; // número de cuenta; "" si no tiene
+  apruebaCc: string[]; // códigos de CC que puede aprobar; ["*"] = todos; [] = ninguno
+  cargo: string; // etiqueta para la UI (ej. "Gerente Comercial"); "" si no aplica
 }
 
 export interface Imputacion {

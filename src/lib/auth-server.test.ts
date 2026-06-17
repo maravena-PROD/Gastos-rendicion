@@ -23,6 +23,8 @@ const usuario: Usuario = {
   area: "Operaciones",
   banco: "",
   cuentaCorriente: "",
+  apruebaCc: [],
+  cargo: "",
 };
 
 beforeEach(() => {
@@ -45,7 +47,7 @@ describe("autenticar", () => {
     const r = await autenticar("bueno");
     expect(r).toEqual({
       ok: true,
-      usuario: { email: "maravena@bosca.cl", nombre: "M. Aravena", rol: "Administrador", area: "Operaciones" },
+      usuario: { email: "maravena@bosca.cl", nombre: "M. Aravena", rol: "Administrador", area: "Operaciones", apruebaCc: ["*"] },
     });
     expect(getUsuario).toHaveBeenCalledWith("maravena@bosca.cl");
   });

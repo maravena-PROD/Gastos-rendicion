@@ -132,6 +132,25 @@ tienes el panorama completo en el dashboard.
 
 ---
 
+## 6.1. Aprobar o rechazar gastos (gerentes)
+
+Si tu perfil tiene asignado uno o más centros de costo (o "todos", para el Gerente
+General), verás el enlace **"Aprobaciones"** en el encabezado, con el número de gastos
+pendientes.
+
+1. Toca **"Aprobaciones"**.
+2. Verás los gastos **pendientes** de tu(s) centro(s) de costo, con su detalle y la
+   boleta.
+3. **Aprobar**: el gasto queda aprobado y sale de la lista.
+4. **Rechazar**: escribe el **motivo** (obligatorio) y confirma.
+
+Notas:
+- No puedes aprobar **tus propios** gastos: esos los revisa el Gerente General.
+- El **Gerente General** puede aprobar en cualquier centro de costo.
+- Una vez decidido, el gasto no vuelve a la lista (la decisión es final).
+
+---
+
 ## 7. Preguntas frecuentes
 
 **¿Necesito internet?**

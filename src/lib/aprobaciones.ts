@@ -1,0 +1,25 @@
+import type { SesionUsuario } from "./auth";
+import type { Gasto } from "./types";
+
+/** true si el alcance incluye "*" (todos) o el código de centro de costo dado. */
+export function tieneAlcance(apruebaCc: string[], ccCodigo: string): boolean {
+  return apruebaCc.includes("*") || apruebaCc.includes(ccCodigo);
+}
+
+/**
+ * Una sesión puede decidir un gasto si: está Registrado, su centro de costo cae
+ * en el alcance, y no es auto-aprobación (salvo alcance total "*").
+ */
+export function puedeAprobar(sesion: SesionUsuario, gasto: Gasto): boolean {
+  if (gasto.estado !== "Registrado") return false;
+  if (!tieneAlcance(sesion.apruebaCc, gasto.imputacion.centroCostoCodigo)) return false;
+  const total = sesion.apruebaCc.includes("*");
+  const esPropio = gasto.usuarioEmail.toLowerCase() === sesion.email.toLowerCase();
+  if (esPropio && !total) return false;
+  return true;
+}
+
+/** Filtra los gastos que la sesión puede aprobar/rechazar. */
+export function gastosPorAprobar(gastos: Gasto[], sesion: SesionUsuario): Gasto[] {
+  return gastos.filter((g) => puedeAprobar(sesion, g));
+}

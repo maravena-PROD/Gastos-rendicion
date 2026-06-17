@@ -26,6 +26,8 @@ export async function GET(req: Request) {
       banco: usuario.banco,
       cuentaCorriente: usuario.cuentaCorriente,
       completo: perfilCompleto(usuario),
+      apruebaCc: usuario.apruebaCc,
+      cargo: usuario.cargo,
       areas,
     });
   } catch {

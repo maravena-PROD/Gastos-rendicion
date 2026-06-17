@@ -102,6 +102,8 @@ export interface Perfil {
   banco: string;
   cuentaCorriente: string;
   completo: boolean;
+  apruebaCc: string[];
+  cargo: string;
   areas: string[];
 }
 
@@ -141,5 +143,22 @@ export function guardarPerfil(perfil: {
   return pedir<{ ok: boolean }>("/api/perfil", {
     method: "POST",
     body: JSON.stringify(perfil),
+  });
+}
+
+/** Lista los gastos pendientes que el usuario actual puede aprobar/rechazar. */
+export function obtenerAprobaciones(): Promise<{ gastos: Gasto[] }> {
+  return pedir<{ gastos: Gasto[] }>("/api/aprobaciones", { method: "GET" });
+}
+
+/** Registra la decisión (Aprobado/Rechazado) sobre un gasto. */
+export function decidirGasto(
+  id: string,
+  decision: "Aprobado" | "Rechazado",
+  motivo?: string,
+): Promise<{ gasto: Gasto }> {
+  return pedir<{ gasto: Gasto }>(`/api/gastos/${id}/decision`, {
+    method: "POST",
+    body: JSON.stringify({ decision, motivo }),
   });
 }
