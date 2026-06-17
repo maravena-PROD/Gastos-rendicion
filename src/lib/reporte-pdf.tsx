@@ -76,5 +76,6 @@ export function ReporteDocument({ modelo }: { modelo: ModeloReporte }) {
 /** Helper callable from a .ts API route to keep JSX out of the route file. */
 export async function renderReportePdf(modelo: ModeloReporte): Promise<Buffer> {
   const { renderToBuffer } = await import("@react-pdf/renderer");
-  return renderToBuffer(<ReporteDocument modelo={modelo} />) as Promise<Buffer>;
+  const result = await renderToBuffer(<ReporteDocument modelo={modelo} />);
+  return Buffer.from(result as Uint8Array);
 }
