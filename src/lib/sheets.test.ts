@@ -159,7 +159,7 @@ describe("gastoToRow / rowToGasto", () => {
   });
 });
 
-import { listGastos, appendGasto, actualizarDecisionGasto } from "./sheets";
+import { listGastos, appendGasto, actualizarGasto } from "./sheets";
 
 beforeEach(() => {
   valuesGet.mockReset();
@@ -198,7 +198,7 @@ describe("appendGasto", () => {
   });
 });
 
-describe("actualizarDecisionGasto", () => {
+describe("actualizarGasto", () => {
   it("localiza por id y reescribe la fila A:AD", async () => {
     valuesGet.mockResolvedValue({
       data: { values: [gastoToRow({ ...gasto, id: "otro" }), gastoToRow(gasto)] },
@@ -208,7 +208,7 @@ describe("actualizarDecisionGasto", () => {
       ...gasto, estado: "Aprobado", aprobadoPor: "gg@bosca.cl",
       fechaDecision: "2026-06-17T12:00:00Z", motivo: "",
     };
-    await actualizarDecisionGasto(decidido);
+    await actualizarGasto(decidido);
     const arg = valuesUpdate.mock.calls[0][0] as { range: string; requestBody: { values: string[][] } };
     expect(arg.range).toBe("Gastos!A3:AD3"); // 2ª fila de datos => fila 3
     expect(arg.requestBody.values[0]).toEqual(gastoToRow(decidido));
@@ -216,7 +216,7 @@ describe("actualizarDecisionGasto", () => {
 
   it("lanza si el gasto no existe", async () => {
     valuesGet.mockResolvedValue({ data: { values: [] } });
-    await expect(actualizarDecisionGasto(gasto)).rejects.toThrow();
+    await expect(actualizarGasto(gasto)).rejects.toThrow();
   });
 });
 
