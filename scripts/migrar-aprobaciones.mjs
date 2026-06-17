@@ -26,8 +26,8 @@ const info = (m) => console.log(`${GRIS}·${RESET} ${m}`);
 const DRY_RUN = process.argv.includes("--dry-run");
 
 // Cada migración: pestaña, rango de la fila 1 a escribir, y los valores canónicos.
-// Los valores DEBEN coincidir con GASTOS_HEADERS de src/lib/sheets.ts y con el
-// orden que leen rowToGasto / usuarioRowToUsuario.
+// Los valores DEBEN coincidir con el orden que leen usuarioRowToUsuario / rowToGasto
+// en src/lib/sheets.ts.
 const MIGRACIONES = [
   {
     pestana: "Usuarios",
@@ -60,9 +60,56 @@ function getSheets() {
 
 /** Lee la fila 1 actual del rango; devuelve un arreglo del mismo largo que los encabezados. */
 async function leerActual(sheets, spreadsheetId, rango, largo) {
-  const res = await sheets.spreadsheets.values.get({ spreadsheetId, range: rango });
-  const fila = (res.data.values ?? [])[0] ?? [];
-  return Array.from({ length: largo }, (_, i) => String(fila[i] ?? "").trim());
+  try {
+    const res = await sheets.spreadsheets.values.get({ spreadsheetId, range: rango });
+    const fila = (res.data.values ?? [])[0] ?? [];
+    return Array.from({ length: largo }, (_, i) => String(fila[i] ?? "").trim());
+  } catch (e) {
+    // Si el rango excede la grilla actual (las columnas aún no existen), se
+    // tratan como vacías: la grilla se ampliará al escribir.
+    if (String(e?.message ?? e).includes("exceeds grid limits")) {
+      return Array.from({ length: largo }, () => "");
+    }
+    throw e;
+  }
+}
+
+/** Número de columnas que abarca un rango por su columna final (ej. "Gastos!AB1:AD1" -> 30). */
+function columnasDeRango(rango) {
+  const fin = (rango.split("!")[1] ?? "").split(":").pop() ?? "";
+  const letras = (fin.match(/[A-Za-z]+/) ?? [""])[0].toUpperCase();
+  let n = 0;
+  for (const ch of letras) n = n * 26 + (ch.charCodeAt(0) - 64);
+  return n;
+}
+
+/**
+ * Asegura que la pestaña tenga al menos las columnas que el rango necesita;
+ * si no, amplía la grilla. Devuelve true si tuvo que ampliar.
+ */
+async function asegurarColumnas(sheets, spreadsheetId, meta, pestana, rango) {
+  const necesarias = columnasDeRango(rango);
+  const hoja = (meta.data.sheets ?? []).find((s) => s.properties?.title === pestana);
+  const actuales = hoja?.properties?.gridProperties?.columnCount ?? 0;
+  if (actuales >= necesarias) return false;
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          updateSheetProperties: {
+            properties: {
+              sheetId: hoja.properties.sheetId,
+              gridProperties: { columnCount: necesarias },
+            },
+            fields: "gridProperties.columnCount",
+          },
+        },
+      ],
+    },
+  });
+  ok(`Grilla de ${pestana} ampliada a ${necesarias} columnas`);
+  return true;
 }
 
 async function main() {
@@ -97,9 +144,17 @@ async function main() {
       }
     });
 
+    const necesarias = columnasDeRango(m.rango);
+    const hoja = (meta.data.sheets ?? []).find((s) => s.properties?.title === m.pestana);
+    const actuales = hoja?.properties?.gridProperties?.columnCount ?? 0;
+    if (actuales < necesarias) {
+      info(`${m.pestana}: grilla actual ${actuales} col; se ampliará a ${necesarias}.`);
+    }
+
     info(`${m.rango}: ${actual.map((v) => v || "∅").join(", ")}  ->  ${m.encabezados.join(", ")}`);
 
     if (!DRY_RUN) {
+      await asegurarColumnas(sheets, spreadsheetId, meta, m.pestana, m.rango);
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: m.rango,
