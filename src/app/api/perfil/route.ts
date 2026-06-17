@@ -26,7 +26,9 @@ export async function GET(req: Request) {
       banco: usuario.banco,
       cuentaCorriente: usuario.cuentaCorriente,
       completo: perfilCompleto(usuario),
-      apruebaCc: usuario.apruebaCc,
+      // Alcance EFECTIVO (el de la sesión): incluye el "*" que decidirAcceso
+      // fuerza para el Administrador, que no está en su fila de la planilla.
+      apruebaCc: auth.usuario.apruebaCc,
       cargo: usuario.cargo,
       areas,
     });
