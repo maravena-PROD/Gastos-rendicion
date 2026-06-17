@@ -276,6 +276,14 @@ describe("usuarioRowToUsuario", () => {
     expect(normal.apruebaCc).toEqual([]);
     expect(normal.cargo).toBe("");
   });
+
+  it("aprueba_cc CSV con espacios se parsea recortado", () => {
+    const u = usuarioRowToUsuario([
+      "g@bosca.cl", "G", "Usuario", "TRUE", "", "1-9", "Desarrollo",
+      "", "", " C0400 , C0500 ", "Gerente de Desarrollo",
+    ]);
+    expect(u.apruebaCc).toEqual(["C0400", "C0500"]);
+  });
 });
 
 describe("listarAreas", () => {

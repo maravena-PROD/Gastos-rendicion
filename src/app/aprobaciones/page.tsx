@@ -72,6 +72,7 @@ function Aprobaciones() {
                 </a>
               )}
               <input
+                aria-label="Motivo del rechazo"
                 className="mt-2 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
                 placeholder="Motivo (obligatorio para rechazar)"
                 value={motivos[g.id] ?? ""}
