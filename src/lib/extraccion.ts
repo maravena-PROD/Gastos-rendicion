@@ -42,6 +42,15 @@ export function extraccionCompleta(e: ExtraccionGasto): boolean {
   return camposFaltantes(e).length === 0;
 }
 
+/**
+ * true si ya se capturó al menos un campo esencial (estamos a mitad de un
+ * gasto). Sirve para distinguir un mensaje inicial/saludo (borrador vacío) de
+ * una respuesta a un follow-up que el bot acaba de preguntar.
+ */
+export function hayDatosEsenciales(e: ExtraccionGasto): boolean {
+  return ESENCIALES.some((campo) => e[campo] !== null);
+}
+
 /** Devuelve la pregunta por el primer campo faltante, o null si está completa. */
 export function siguientePregunta(e: ExtraccionGasto): string | null {
   const faltantes = camposFaltantes(e);

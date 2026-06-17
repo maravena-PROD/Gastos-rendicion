@@ -3,6 +3,7 @@ import {
   normalizarCategoria,
   camposFaltantes,
   extraccionCompleta,
+  hayDatosEsenciales,
   siguientePregunta,
   fusionarExtraccion,
   type ExtraccionGasto,
@@ -72,6 +73,19 @@ describe("extraccionCompleta", () => {
   });
   it("false cuando falta alguno", () => {
     expect(extraccionCompleta(vacia)).toBe(false);
+  });
+});
+
+describe("hayDatosEsenciales", () => {
+  it("false cuando el borrador está vacío (mensaje inicial / saludo)", () => {
+    expect(hayDatosEsenciales(vacia)).toBe(false);
+  });
+  it("true cuando ya hay al menos un campo esencial (gasto en curso)", () => {
+    expect(hayDatosEsenciales({ ...vacia, monto: 45000 })).toBe(true);
+    expect(hayDatosEsenciales(completa)).toBe(true);
+  });
+  it("ignora campos opcionales (solo cuentan los esenciales)", () => {
+    expect(hayDatosEsenciales({ ...vacia, rutEmisor: "76.543.219-7" })).toBe(false);
   });
 });
 

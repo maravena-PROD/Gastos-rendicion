@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getBearerToken } from "@/lib/auth";
 import { autenticar } from "@/lib/auth-server";
 import { extraerDeTexto, extraerDeImagen } from "@/lib/claude";
-import { camposFaltantes, type ExtraccionGasto } from "@/lib/extraccion";
+import { camposFaltantes, hayDatosEsenciales, type ExtraccionGasto } from "@/lib/extraccion";
 import { validarImagen } from "@/lib/validacion-archivo";
 
 export async function POST(req: Request) {
@@ -34,7 +34,10 @@ export async function POST(req: Request) {
     }
     if (body.texto) {
       const borrador = body.borrador;
-      const campoPreguntado = borrador ? (camposFaltantes(borrador)[0] ?? null) : null;
+      // Solo hay "campo preguntado" si ya estamos a mitad de un gasto. En un
+      // mensaje inicial o saludo (borrador vacío) no se fuerza ningún mapeo.
+      const campoPreguntado =
+        borrador && hayDatosEsenciales(borrador) ? (camposFaltantes(borrador)[0] ?? null) : null;
       // Fecha de hoy en zona Chile (en-CA da formato AAAA-MM-DD) para fechas relativas.
       const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Santiago" });
       const extraccion = await extraerDeTexto(body.texto, { borrador, campoPreguntado, hoy });
