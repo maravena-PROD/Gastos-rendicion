@@ -18,8 +18,20 @@ function usuario(parcial: Partial<Usuario>): Usuario {
 }
 
 describe("perfilCompleto", () => {
-  it("true cuando rut y area están presentes", () => {
-    expect(perfilCompleto(usuario({ rut: "76.543.219-7", area: "Operaciones" }))).toBe(true);
+  it("true cuando nombre, rut y area están presentes", () => {
+    expect(
+      perfilCompleto(usuario({ nombre: "Ana", rut: "76.543.219-7", area: "Operaciones" })),
+    ).toBe(true);
+  });
+  it("false si falta el nombre", () => {
+    expect(perfilCompleto(usuario({ nombre: "", rut: "76.543.219-7", area: "Operaciones" }))).toBe(
+      false,
+    );
+  });
+  it("false si el nombre es solo espacios", () => {
+    expect(
+      perfilCompleto(usuario({ nombre: "   ", rut: "76.543.219-7", area: "Operaciones" })),
+    ).toBe(false);
   });
   it("false si falta el rut", () => {
     expect(perfilCompleto(usuario({ area: "Operaciones" }))).toBe(false);
