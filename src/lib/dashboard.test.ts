@@ -7,6 +7,8 @@ import {
   tendenciaPorDia,
   contarPendientes,
   mesesDisponibles,
+  filtrarPorRango,
+  porTipoRendicion,
 } from "./dashboard";
 import { IMPUTACION_VACIA } from "./types";
 import type { Gasto } from "./types";
@@ -104,5 +106,39 @@ describe("contarPendientes", () => {
 describe("mesesDisponibles", () => {
   it("devuelve los año-meses presentes, de más reciente a más antiguo", () => {
     expect(mesesDisponibles(gastos)).toEqual(["2026-06", "2026-05"]);
+  });
+});
+
+function gR(fechaDocumento: string, monto: number, tipoRendicion: "Rendicion" | "Devolucion"): Gasto {
+  return {
+    id: "x", fechaRegistro: "", usuarioEmail: "", usuarioNombre: "",
+    fechaDocumento, comercio: "", rutEmisor: "", numeroDocumento: "",
+    categoria: "Otros", monto, direccion: "", observacion: "",
+    imagenUrl: "", imagenDriveId: "", estado: "Registrado", fechaCreacion: "",
+    usuarioArea: "", imputacion: {
+      centroCostoCodigo: "", centroCostoDetalle: "", areaCodigo: "",
+      areaDetalle: "", ubicacionCodigo: "", ubicacionDetalle: "",
+    },
+    tipoRendicion, tipoDocumento: "Boleta", montoNeto: 0, iva: 0,
+  };
+}
+
+describe("filtrarPorRango", () => {
+  const gastosRango = [gR("2026-06-01", 100, "Rendicion"), gR("2026-06-15", 200, "Devolucion"), gR("2026-07-01", 300, "Rendicion")];
+
+  it("incluye ambos extremos del rango", () => {
+    const r = filtrarPorRango(gastosRango, "2026-06-01", "2026-06-15");
+    expect(r.map((x) => x.monto)).toEqual([100, 200]);
+  });
+
+  it("excluye fechas fuera del rango", () => {
+    expect(filtrarPorRango(gastosRango, "2026-06-16", "2026-06-30")).toEqual([]);
+  });
+});
+
+describe("porTipoRendicion", () => {
+  it("suma montos por tipo", () => {
+    const gastosT = [gR("2026-06-01", 100, "Rendicion"), gR("2026-06-02", 200, "Devolucion"), gR("2026-06-03", 50, "Devolucion")];
+    expect(porTipoRendicion(gastosT)).toEqual({ rendicion: 100, devolucion: 250 });
   });
 });

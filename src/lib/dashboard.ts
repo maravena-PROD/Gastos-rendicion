@@ -57,3 +57,20 @@ export function mesesDisponibles(gastos: Gasto[]): string[] {
   }
   return [...set].sort((a, b) => b.localeCompare(a));
 }
+
+/** Filtra los gastos cuya fechaDocumento cae en [desde, hasta] inclusivo (YYYY-MM-DD). */
+export function filtrarPorRango(gastos: Gasto[], desde: string, hasta: string): Gasto[] {
+  return gastos.filter((g) => g.fechaDocumento >= desde && g.fechaDocumento <= hasta);
+}
+
+/** Suma de montos separada por tipo de rendición. */
+export function porTipoRendicion(gastos: Gasto[]): { rendicion: number; devolucion: number } {
+  return gastos.reduce(
+    (acc, g) => {
+      if (g.tipoRendicion === "Devolucion") acc.devolucion += g.monto;
+      else acc.rendicion += g.monto;
+      return acc;
+    },
+    { rendicion: 0, devolucion: 0 },
+  );
+}
