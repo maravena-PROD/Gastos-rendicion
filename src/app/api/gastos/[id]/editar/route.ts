@@ -5,6 +5,7 @@ import { listGastos, listarCentrosCosto, actualizarGasto } from "@/lib/sheets";
 import { puedeEditar } from "@/lib/aprobaciones";
 import { construirCamposGasto } from "@/lib/gasto-payload";
 import { asegurarCuentaDevolucion } from "@/lib/gasto-cuenta";
+import { puedeIngresarEnCc } from "@/lib/centros-costo";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const token = getBearerToken(req);
@@ -40,6 +41,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const r = construirCamposGasto(body, catalogo);
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
   const campos = r.campos;
+
+  if (!puedeIngresarEnCc(auth.usuario.ingresaCc, campos.imputacion.centroCostoCodigo)) {
+    return NextResponse.json(
+      { error: "No tienes permiso para ingresar gastos en ese centro de costo" },
+      { status: 403 },
+    );
+  }
 
   if (campos.tipoRendicion === "Devolucion") {
     const cuenta = await asegurarCuentaDevolucion(auth.usuario.email, body);

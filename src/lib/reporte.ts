@@ -25,6 +25,7 @@ export interface FilaReporte {
   iva: number;
   total: number;
   tipoRendicion: string;
+  aprobadoPor: string;
 }
 
 export interface TotalesReporte {
@@ -45,9 +46,20 @@ export interface ModeloReporte {
 export function construirReporte(
   usuario: Usuario,
   gastos: Gasto[],
-  opts: { desde: string; hasta: string; fechaRendicion: string },
+  opts: {
+    desde: string;
+    hasta: string;
+    fechaRendicion: string;
+    /** Resuelve el correo del aprobador a su nombre; si no, se usa el correo. */
+    nombrePorEmail?: (email: string) => string;
+  },
 ): ModeloReporte {
-  const filas: FilaReporte[] = gastos.map((g) => ({
+  // El PDF de rendición solo lista gastos aprobados.
+  const aprobados = gastos.filter((g) => g.estado === "Aprobado");
+  const nombreAprobador = (email: string) =>
+    email ? (opts.nombrePorEmail?.(email) ?? email) : "";
+
+  const filas: FilaReporte[] = aprobados.map((g) => ({
     fechaCompra: g.fechaDocumento,
     proveedor: g.comercio,
     centroCosto: g.imputacion.centroCostoCodigo,
@@ -60,13 +72,14 @@ export function construirReporte(
     iva: g.iva,
     total: g.monto,
     tipoRendicion: g.tipoRendicion,
+    aprobadoPor: nombreAprobador(g.aprobadoPor),
   }));
 
-  const tipos = porTipoRendicion(gastos);
+  const tipos = porTipoRendicion(aprobados);
   const totales: TotalesReporte = {
-    neto: gastos.reduce((a, g) => a + g.montoNeto, 0),
-    iva: gastos.reduce((a, g) => a + g.iva, 0),
-    total: gastos.reduce((a, g) => a + g.monto, 0),
+    neto: aprobados.reduce((a, g) => a + g.montoNeto, 0),
+    iva: aprobados.reduce((a, g) => a + g.iva, 0),
+    total: aprobados.reduce((a, g) => a + g.monto, 0),
     rendicion: tipos.rendicion,
     devolucion: tipos.devolucion,
   };

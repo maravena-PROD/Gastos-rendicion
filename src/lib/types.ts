@@ -59,6 +59,7 @@ export interface Usuario {
   cuentaCorriente: string; // número de cuenta; "" si no tiene
   apruebaCc: string[]; // códigos de CC que puede aprobar; ["*"] = todos; [] = ninguno
   cargo: string; // etiqueta para la UI (ej. "Gerente Comercial"); "" si no aplica
+  ingresaCc?: string[]; // códigos de CC donde puede INGRESAR gastos; ["*"] o vacío/ausente = todos
 }
 
 export interface Imputacion {
