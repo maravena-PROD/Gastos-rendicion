@@ -91,7 +91,7 @@ function IconoSalir() {
 
 const NAV: ItemNav[] = [
   { href: "/", etiqueta: "Registrar gasto", icono: <IconoRegistrar /> },
-  { href: "/dashboard", etiqueta: "Dashboard", icono: <IconoDashboard /> },
+  { href: "/dashboard", etiqueta: "Mis gastos", icono: <IconoDashboard /> },
   { href: "/analisis", etiqueta: "Análisis", icono: <IconoAnalisis />, soloAprobadores: true },
   { href: "/aprobaciones", etiqueta: "Aprobaciones", icono: <IconoAprobar />, soloAprobadores: true },
 ];

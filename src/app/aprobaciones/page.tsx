@@ -7,6 +7,32 @@ import { obtenerAprobaciones, decidirGasto, obtenerPerfil } from "@/lib/api-clie
 import type { Gasto } from "@/lib/types";
 import { formatCLP } from "@/lib/format";
 
+const ETIQUETA_RENDICION: Record<string, string> = {
+  Rendicion: "Rendición",
+  Devolucion: "Devolución",
+};
+
+/** Un dato del gasto con su etiqueta, para el detalle de la aprobación. */
+function Campo({ etiqueta, children, ancho }: { etiqueta: string; children: React.ReactNode; ancho?: boolean }) {
+  return (
+    <div className={ancho ? "col-span-2 sm:col-span-3" : ""}>
+      <dt className="text-[11px] font-medium uppercase tracking-wide text-gray-400">{etiqueta}</dt>
+      <dd className="mt-0.5 text-sm text-bosca-carbon">{children}</dd>
+    </div>
+  );
+}
+
+/** Muestra "código · detalle" con el código en negrita; tolera que falte alguno. */
+function CodigoDetalle({ codigo, detalle }: { codigo: string; detalle: string }) {
+  if (!codigo) return <>{detalle || "—"}</>;
+  return (
+    <>
+      <span className="font-medium">{codigo}</span>
+      {detalle ? ` · ${detalle}` : ""}
+    </>
+  );
+}
+
 function Aprobaciones() {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -53,24 +79,77 @@ function Aprobaciones() {
           <p className="text-center text-sm text-gray-400">No tienes gastos pendientes por aprobar.</p>
         ) : (
           gastos.map((g) => (
-            <div key={g.id} className="rounded-2xl border border-bosca-gris bg-white p-4">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-bosca-carbon">{g.comercio}</span>
-                <span className="font-semibold text-bosca-carbon">{formatCLP(g.monto)}</span>
+            <div key={g.id} className="rounded-2xl border border-bosca-gris bg-white p-4 sm:p-5">
+              {/* Encabezado: comercio + monto */}
+              <div className="flex items-start justify-between gap-3 border-b border-bosca-gris pb-3">
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold text-bosca-carbon">{g.comercio}</p>
+                  <p className="mt-0.5 text-xs text-gray-500">{g.categoria}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-xl font-bold tabular-nums text-bosca-carbon">{formatCLP(g.monto)}</p>
+                  <span
+                    className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                      g.tipoRendicion === "Devolucion"
+                        ? "bg-bosca-ambar/15 text-bosca-ambar"
+                        : "bg-bosca-gris text-gray-600"
+                    }`}
+                  >
+                    {ETIQUETA_RENDICION[g.tipoRendicion] ?? g.tipoRendicion}
+                  </span>
+                </div>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                {g.fechaDocumento} · {g.usuarioNombre} · CC {g.imputacion.centroCostoCodigo}
-                {g.imputacion.centroCostoDetalle ? ` (${g.imputacion.centroCostoDetalle})` : ""} · {g.tipoRendicion}
-              </p>
-              {g.observacion && <p className="mt-1 text-xs text-gray-500">{g.observacion}</p>}
+
+              {/* Detalle etiquetado */}
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 pt-3 sm:grid-cols-3">
+                <Campo etiqueta="Fecha del documento">{g.fechaDocumento}</Campo>
+                <Campo etiqueta="Solicitante">
+                  {g.usuarioNombre}
+                  {g.usuarioArea ? <span className="text-gray-400"> · {g.usuarioArea}</span> : null}
+                </Campo>
+                <Campo etiqueta="Centro de costo">
+                  <CodigoDetalle codigo={g.imputacion.centroCostoCodigo} detalle={g.imputacion.centroCostoDetalle} />
+                </Campo>
+                {(g.imputacion.areaCodigo || g.imputacion.areaDetalle) && (
+                  <Campo etiqueta="Área">
+                    <CodigoDetalle codigo={g.imputacion.areaCodigo} detalle={g.imputacion.areaDetalle} />
+                  </Campo>
+                )}
+                {(g.imputacion.ubicacionCodigo || g.imputacion.ubicacionDetalle) && (
+                  <Campo etiqueta="Ubicación">
+                    <CodigoDetalle codigo={g.imputacion.ubicacionCodigo} detalle={g.imputacion.ubicacionDetalle} />
+                  </Campo>
+                )}
+                <Campo etiqueta="Documento">
+                  {g.tipoDocumento}
+                  {g.numeroDocumento ? ` N° ${g.numeroDocumento}` : ""}
+                </Campo>
+                {g.iva > 0 && (
+                  <Campo etiqueta="Neto / IVA">
+                    {formatCLP(g.montoNeto)} <span className="text-gray-400">/</span> {formatCLP(g.iva)}
+                  </Campo>
+                )}
+                {g.observacion && (
+                  <Campo etiqueta="Observación" ancho>
+                    {g.observacion}
+                  </Campo>
+                )}
+              </dl>
+
               {g.imagenUrl && (
-                <a href={g.imagenUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-bosca-burdeo underline">
+                <a
+                  href={g.imagenUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-bosca-burdeo hover:underline"
+                >
                   Ver boleta
                 </a>
               )}
+
               <input
                 aria-label="Motivo del rechazo"
-                className="mt-2 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
+                className="mt-4 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
                 placeholder="Motivo (obligatorio para rechazar)"
                 value={motivos[g.id] ?? ""}
                 onChange={(e) => setMotivos((m) => ({ ...m, [g.id]: e.target.value }))}

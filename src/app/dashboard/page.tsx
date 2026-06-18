@@ -118,7 +118,7 @@ function Dashboard() {
 
   return (
     <AppShell
-      titulo="Dashboard"
+      titulo="Mis gastos"
       usuario={{ nombre: usuario.nombre, area: usuario.area, cargo: usuario.cargo, apruebaCc }}
       pendientes={pendientesAprob}
     >
@@ -155,30 +155,42 @@ function Dashboard() {
               </button>
             </div>
 
-            <section className="rounded-2xl border border-bosca-gris bg-white p-4">
-              <p className="text-xs text-gray-500">Total del período</p>
-              <p className="text-3xl font-bold text-gray-900">{formatCLP(totalGastos(delRango))}</p>
-              <p className="text-sm text-gray-400">{delRango.length} gastos</p>
-            </section>
-
-            <section className="rounded-2xl border border-bosca-gris bg-white p-4">
-              <h2 className="mb-2 text-sm font-semibold text-gray-700">Rendiciones vs Devoluciones</h2>
-              {(() => {
-                const t = porTipoRendicion(delRango);
-                return (
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-gray-500">Rendición (justificado)</p>
-                      <p className="text-xl font-bold text-gray-900">{formatCLP(t.rendicion)}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Devolución (a reembolsar)</p>
-                      <p className="text-xl font-bold text-bosca-ambar">{formatCLP(t.devolucion)}</p>
-                    </div>
+            {/* Banda de KPIs — densa, números prominentes */}
+            {(() => {
+              const t = porTipoRendicion(delRango);
+              return (
+                <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                  <div className="rounded-2xl border border-bosca-gris bg-bosca-carbon p-4 sm:p-5">
+                    <p className="text-xs text-bosca-crema/60">Total del período</p>
+                    <p className="mt-1 text-3xl font-bold tracking-tight text-bosca-crema sm:text-4xl">
+                      {formatCLP(totalGastos(delRango))}
+                    </p>
+                    <p className="mt-1 text-xs text-bosca-crema/45">{delRango.length} gastos</p>
                   </div>
-                );
-              })()}
-            </section>
+                  <div className="rounded-2xl border border-bosca-gris bg-white p-4 sm:p-5">
+                    <p className="text-xs text-gray-500">Rendición</p>
+                    <p className="mt-1 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+                      {formatCLP(t.rendicion)}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">Justificado</p>
+                  </div>
+                  <div className="rounded-2xl border border-bosca-gris bg-white p-4 sm:p-5">
+                    <p className="text-xs text-gray-500">Devolución</p>
+                    <p className="mt-1 text-2xl font-bold tracking-tight text-bosca-ambar sm:text-3xl">
+                      {formatCLP(t.devolucion)}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">A reembolsar</p>
+                  </div>
+                  <div className="rounded-2xl border border-bosca-gris bg-white p-4 sm:p-5">
+                    <p className="text-xs text-gray-500">Pendientes</p>
+                    <p className="mt-1 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+                      {contarPendientes(delRango)}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">Por aprobar</p>
+                  </div>
+                </section>
+              );
+            })()}
 
             <section className="rounded-2xl border border-bosca-gris bg-white p-4">
               <h2 className="mb-2 text-sm font-semibold text-gray-700">Estado de mis gastos</h2>
@@ -191,15 +203,15 @@ function Dashboard() {
                     <div className="grid grid-cols-3 gap-3">
                       <div>
                         <p className="text-gray-500">Aprobado (Rendición)</p>
-                        <p className="text-lg font-bold text-gray-900">{formatCLP(aprob.rendicion)}</p>
+                        <p className="text-xl font-bold tabular-nums text-gray-900 sm:text-2xl">{formatCLP(aprob.rendicion)}</p>
                       </div>
                       <div>
                         <p className="text-gray-500">Aprobado (Devolución)</p>
-                        <p className="text-lg font-bold text-bosca-ambar">{formatCLP(aprob.devolucion)}</p>
+                        <p className="text-xl font-bold tabular-nums text-bosca-ambar sm:text-2xl">{formatCLP(aprob.devolucion)}</p>
                       </div>
                       <div>
                         <p className="text-gray-500">Pendientes</p>
-                        <p className="text-lg font-bold text-gray-900">{pend}</p>
+                        <p className="text-xl font-bold tabular-nums text-gray-900 sm:text-2xl">{pend}</p>
                       </div>
                     </div>
                     <div>
@@ -232,35 +244,32 @@ function Dashboard() {
               })()}
             </section>
 
-            <section className="rounded-2xl border border-bosca-gris bg-white p-4">
-              <h2 className="mb-2 text-sm font-semibold text-gray-700">Por categoría</h2>
-              <GraficoCategorias datos={porCategoria(delRango)} />
-            </section>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <section className="rounded-2xl border border-bosca-gris bg-white p-4 sm:p-5">
+                <h2 className="mb-3 text-sm font-semibold text-gray-700">Por categoría</h2>
+                <GraficoCategorias datos={porCategoria(delRango)} />
+              </section>
 
-            <section className="rounded-2xl border border-bosca-gris bg-white p-4">
-              <h2 className="mb-2 text-sm font-semibold text-gray-700">Tendencia</h2>
-              <GraficoTendencia datos={tendenciaPorDia(delRango)} />
-            </section>
+              <section className="rounded-2xl border border-bosca-gris bg-white p-4 sm:p-5">
+                <h2 className="mb-3 text-sm font-semibold text-gray-700">Tendencia</h2>
+                <GraficoTendencia datos={tendenciaPorDia(delRango)} />
+              </section>
+            </div>
 
             {esAdmin && (
-              <>
-                <section className="rounded-2xl border border-bosca-gris bg-white p-4">
-                  <h2 className="mb-2 text-sm font-semibold text-gray-700">Por usuario</h2>
-                  <ul className="divide-y text-sm">
-                    {porUsuario(delRango).map((u) => (
-                      <li key={u.usuario} className="flex justify-between py-1.5">
-                        <span className="text-gray-700">{u.usuario}</span>
-                        <span className="font-medium text-gray-900">{formatCLP(u.total)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-
-                <section className="rounded-2xl border border-bosca-gris bg-white p-4">
-                  <p className="text-xs text-gray-500">Pendientes de aprobación</p>
-                  <p className="text-2xl font-bold text-bosca-ambar">{contarPendientes(delRango)}</p>
-                </section>
-              </>
+              <section className="rounded-2xl border border-bosca-gris bg-white p-4 sm:p-5">
+                <h2 className="mb-3 text-sm font-semibold text-gray-700">Por usuario</h2>
+                <ul className="divide-y">
+                  {porUsuario(delRango).map((u) => (
+                    <li key={u.usuario} className="flex items-center justify-between gap-3 py-2.5">
+                      <span className="min-w-0 truncate text-sm text-gray-600">{u.usuario}</span>
+                      <span className="shrink-0 text-base font-semibold tabular-nums text-gray-900">
+                        {formatCLP(u.total)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
           </>
         )}
