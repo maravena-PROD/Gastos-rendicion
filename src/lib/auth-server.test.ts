@@ -47,7 +47,7 @@ describe("autenticar", () => {
     const r = await autenticar("bueno");
     expect(r).toEqual({
       ok: true,
-      usuario: { email: "maravena@bosca.cl", nombre: "M. Aravena", rol: "Administrador", area: "Operaciones", apruebaCc: ["*"] },
+      usuario: { email: "maravena@bosca.cl", nombre: "M. Aravena", rol: "Administrador", area: "Operaciones", apruebaCc: ["*"], ingresaCc: ["*"] },
     });
     expect(getUsuario).toHaveBeenCalledWith("maravena@bosca.cl");
   });

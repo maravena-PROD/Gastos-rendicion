@@ -27,6 +27,7 @@ describe("decidirAcceso", () => {
         rol: "Administrador",
         area: "Operaciones",
         apruebaCc: ["*"], // Administrador => alcance total
+        ingresaCc: ["*"], // Administrador => ingresa en todos
       },
     });
   });

@@ -65,6 +65,24 @@ export function resolverImputacion(
   };
 }
 
+/**
+ * true si el usuario puede INGRESAR gastos en el centro de costo dado. El alcance
+ * vacío o indefinido significa "todos" (compatibilidad con usuarios sin restricción);
+ * "*" también es todos; en otro caso, debe estar el código exacto.
+ */
+export function puedeIngresarEnCc(ingresaCc: string[] | undefined, ccCodigo: string): boolean {
+  if (!ingresaCc || ingresaCc.length === 0 || ingresaCc.includes("*")) return true;
+  return ingresaCc.includes(ccCodigo);
+}
+
+/** Filtra el catálogo a los centros de costo donde el usuario puede ingresar. */
+export function centrosPermitidos(
+  entries: CentroCostoEntry[],
+  ingresaCc: string[] | undefined,
+): CentroCostoEntry[] {
+  return entries.filter((e) => puedeIngresarEnCc(ingresaCc, e.ccCodigo));
+}
+
 export function esCombinacionValida(
   entries: CentroCostoEntry[],
   ccCodigo: string,

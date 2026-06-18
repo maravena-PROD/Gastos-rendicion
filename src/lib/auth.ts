@@ -9,6 +9,7 @@ export interface SesionUsuario {
   rol: Rol;
   area: string;
   apruebaCc: string[];
+  ingresaCc?: string[]; // CC donde puede ingresar gastos; ["*"] o vacío = todos
 }
 
 /** Resultado de decidir acceso: éxito con la sesión, o fallo con código HTTP. */
@@ -52,6 +53,7 @@ export function decidirAcceso(
       rol: usuario.rol,
       area: usuario.area,
       apruebaCc: usuario.rol === "Administrador" ? ["*"] : usuario.apruebaCc,
+      ingresaCc: usuario.rol === "Administrador" ? ["*"] : (usuario.ingresaCc ?? []),
     },
   };
 }

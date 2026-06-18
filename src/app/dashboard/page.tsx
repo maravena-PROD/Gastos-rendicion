@@ -92,6 +92,8 @@ function Dashboard() {
     () => (desdeActivo && hastaActivo ? filtrarPorRango(gastos, desdeActivo, hastaActivo) : []),
     [gastos, desdeActivo, hastaActivo],
   );
+  // El PDF solo exporta gastos aprobados; sin aprobados en el rango, no hay nada que descargar.
+  const aprobadosEnRango = useMemo(() => delRango.filter((g) => g.estado === "Aprobado").length, [delRango]);
   const esAdmin = rol === "Administrador";
 
   async function descargarReporte() {
@@ -148,10 +150,11 @@ function Dashboard() {
               />
               <button
                 onClick={descargarReporte}
-                disabled={descargando || delRango.length === 0}
+                disabled={descargando || aprobadosEnRango === 0}
+                title={aprobadosEnRango === 0 ? "No hay gastos aprobados en el período" : "Exporta solo gastos aprobados"}
                 className="ml-auto rounded-lg bg-bosca-burdeo px-3 py-1.5 text-sm font-medium text-white hover:bg-bosca-burdeo-h disabled:opacity-40"
               >
-                {descargando ? "Generando…" : "Descargar PDF"}
+                {descargando ? "Generando…" : `Descargar PDF${aprobadosEnRango > 0 ? ` (${aprobadosEnRango})` : ""}`}
               </button>
             </div>
 

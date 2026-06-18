@@ -227,6 +227,7 @@ export function usuarioRowToUsuario(row: string[]): Usuario {
     cuentaCorriente: cell(row, 8),
     apruebaCc: parseApruebaCc(cell(row, 9)),
     cargo: cell(row, 10),
+    ingresaCc: parseApruebaCc(cell(row, 11)),
   };
 }
 
@@ -307,7 +308,7 @@ export async function getUsuario(email: string): Promise<Usuario | null> {
   const sheets = getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
-    range: "Usuarios!A2:K",
+    range: "Usuarios!A2:L",
   });
   const rows = (res.data.values ?? []) as string[][];
   const match = rows
@@ -315,4 +316,15 @@ export async function getUsuario(email: string): Promise<Usuario | null> {
     .find((u) => u.email.toLowerCase() === email.toLowerCase());
   if (!match || !match.activo) return null;
   return match;
+}
+
+/** Lista todos los usuarios de la planilla (para resolver correos a nombres, etc.). */
+export async function listUsuarios(): Promise<Usuario[]> {
+  const sheets = getSheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: getEnv("GOOGLE_SHEETS_ID"),
+    range: "Usuarios!A2:L",
+  });
+  const rows = (res.data.values ?? []) as string[][];
+  return rows.map(usuarioRowToUsuario);
 }

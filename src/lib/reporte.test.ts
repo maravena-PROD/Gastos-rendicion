@@ -27,11 +27,18 @@ function g(partial: Partial<Gasto>): Gasto {
 
 describe("construirReporte", () => {
   const gastos = [
-    g({ monto: 10000, tipoRendicion: "Rendicion", montoNeto: 0, iva: 0 }),
-    g({ monto: 49266, tipoRendicion: "Devolucion", tipoDocumento: "Factura", montoNeto: 41400, iva: 7866 }),
+    g({ monto: 10000, tipoRendicion: "Rendicion", montoNeto: 0, iva: 0, estado: "Aprobado", aprobadoPor: "jefe@bosca.cl" }),
+    g({ monto: 49266, tipoRendicion: "Devolucion", tipoDocumento: "Factura", montoNeto: 41400, iva: 7866, estado: "Aprobado", aprobadoPor: "gerente@bosca.cl" }),
+    g({ monto: 99999, estado: "Registrado" }), // pendiente -> excluido del PDF
+    g({ monto: 88888, estado: "Rechazado" }), // rechazado -> excluido del PDF
   ];
+  const nombres: Record<string, string> = {
+    "jefe@bosca.cl": "Juan Jefe",
+    "gerente@bosca.cl": "Ana Gerente",
+  };
   const r = construirReporte(usuario, gastos, {
     desde: "2026-06-01", hasta: "2026-06-30", fechaRendicion: "2026-06-17",
+    nombrePorEmail: (e) => nombres[e.toLowerCase()] ?? e,
   });
 
   it("arma la cabecera con datos del usuario", () => {
@@ -43,12 +50,21 @@ describe("construirReporte", () => {
     expect(r.cabecera.fechaRendicion).toBe("2026-06-17");
   });
 
-  it("crea una fila por gasto con descripción = observación", () => {
+  it("solo incluye aprobados, con su descripción y el NOMBRE de quien aprobó", () => {
     expect(r.filas).toHaveLength(2);
     expect(r.filas[0].descripcion).toBe("Bencina");
+    expect(r.filas[0].aprobadoPor).toBe("Juan Jefe");
+    expect(r.filas[1].aprobadoPor).toBe("Ana Gerente");
   });
 
-  it("calcula totales y subtotales por tipo", () => {
+  it("usa el correo como respaldo si no se conoce el nombre del aprobador", () => {
+    const sinResolver = construirReporte(usuario, gastos, {
+      desde: "2026-06-01", hasta: "2026-06-30", fechaRendicion: "2026-06-17",
+    });
+    expect(sinResolver.filas[0].aprobadoPor).toBe("jefe@bosca.cl");
+  });
+
+  it("calcula totales y subtotales solo sobre los aprobados", () => {
     expect(r.totales.total).toBe(59266);
     expect(r.totales.neto).toBe(41400);
     expect(r.totales.iva).toBe(7866);

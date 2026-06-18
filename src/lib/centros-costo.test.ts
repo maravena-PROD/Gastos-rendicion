@@ -5,6 +5,8 @@ import {
   ubicacionesDe,
   resolverImputacion,
   esCombinacionValida,
+  puedeIngresarEnCc,
+  centrosPermitidos,
 } from "./centros-costo";
 import type { CentroCostoEntry } from "./types";
 
@@ -70,6 +72,34 @@ describe("esCombinacionValida", () => {
   it("true para válida, false para inválida", () => {
     expect(esCombinacionValida(catalogo, "C0100", "A1030", "T9510")).toBe(true);
     expect(esCombinacionValida(catalogo, "C0100", "A1030", "T9005")).toBe(false);
+  });
+});
+
+describe("puedeIngresarEnCc", () => {
+  it("permite cualquier CC si el alcance está vacío (compatibilidad: todos)", () => {
+    expect(puedeIngresarEnCc([], "C0100")).toBe(true);
+  });
+  it("permite cualquier CC si el alcance es '*'", () => {
+    expect(puedeIngresarEnCc(["*"], "C0999")).toBe(true);
+  });
+  it("permite solo los CC del alcance acotado", () => {
+    expect(puedeIngresarEnCc(["C0200"], "C0200")).toBe(true);
+    expect(puedeIngresarEnCc(["C0200"], "C0100")).toBe(false);
+  });
+  it("trata un alcance indefinido como todos", () => {
+    expect(puedeIngresarEnCc(undefined, "C0100")).toBe(true);
+  });
+});
+
+describe("centrosPermitidos", () => {
+  it("filtra el catálogo a los CC permitidos", () => {
+    const r = centrosPermitidos(catalogo, ["C0200"]);
+    expect(r.every((e) => e.ccCodigo === "C0200")).toBe(true);
+    expect(r).toHaveLength(1);
+  });
+  it("devuelve todo el catálogo si el alcance es vacío o '*'", () => {
+    expect(centrosPermitidos(catalogo, [])).toHaveLength(catalogo.length);
+    expect(centrosPermitidos(catalogo, ["*"])).toHaveLength(catalogo.length);
   });
 });
 

@@ -33,22 +33,23 @@ const styles = StyleSheet.create({
 
 type ColDef = { k: string; t: string; w: number; num?: boolean; wrap?: boolean };
 
-// Anchos en puntos por columna. Suman ~782, justo bajo el ancho útil de A4
+// Anchos en puntos por columna. Suman ~792, justo bajo el ancho útil de A4
 // horizontal (~794 = 841.89 - 2*24 de padding), para aprovechar todo el ancho
 // sin desbordar la página.
 const cols: ColDef[] = [
-  { k: "fechaCompra", t: "Fecha", w: 46 },
-  { k: "proveedor", t: "Proveedor", w: 112 },
-  { k: "centroCosto", t: "C.Costo", w: 40 },
-  { k: "area", t: "Área", w: 38 },
-  { k: "ubicacion", t: "Ubic.", w: 38 },
-  { k: "tipoDocumento", t: "Tipo", w: 36 },
-  { k: "numeroDocumento", t: "N° Doc", w: 88, wrap: true },
-  { k: "descripcion", t: "Descripción", w: 162 },
-  { k: "neto", t: "Neto", w: 56, num: true },
-  { k: "iva", t: "IVA", w: 50, num: true },
-  { k: "total", t: "Total", w: 62, num: true },
-  { k: "tipoRendicion", t: "Tipo rend.", w: 54 },
+  { k: "fechaCompra", t: "Fecha", w: 44 },
+  { k: "proveedor", t: "Proveedor", w: 96 },
+  { k: "centroCosto", t: "C.Costo", w: 38 },
+  { k: "area", t: "Área", w: 36 },
+  { k: "ubicacion", t: "Ubic.", w: 36 },
+  { k: "tipoDocumento", t: "Tipo", w: 34 },
+  { k: "numeroDocumento", t: "N° Doc", w: 78, wrap: true },
+  { k: "descripcion", t: "Descripción", w: 124 },
+  { k: "neto", t: "Neto", w: 54, num: true },
+  { k: "iva", t: "IVA", w: 48, num: true },
+  { k: "total", t: "Total", w: 60, num: true },
+  { k: "tipoRendicion", t: "Tipo rend.", w: 48 },
+  { k: "aprobadoPor", t: "Aprobado por", w: 96, wrap: true },
 ];
 
 export function ReporteDocument({ modelo }: { modelo: ModeloReporte }) {
@@ -61,7 +62,8 @@ export function ReporteDocument({ modelo }: { modelo: ModeloReporte }) {
           <View style={styles.cabLinea}><Text style={styles.cabEtq}>Rendición de:</Text><Text>{cabecera.nombre}</Text></View>
           <View style={styles.cabLinea}><Text style={styles.cabEtq}>RUT:</Text><Text>{cabecera.rut}</Text></View>
           <View style={styles.cabLinea}><Text style={styles.cabEtq}>Correo:</Text><Text>{cabecera.correo}</Text></View>
-          <View style={styles.cabLinea}><Text style={styles.cabEtq}>C. Corriente:</Text><Text>{cabecera.cuentaCorriente} — {cabecera.banco}</Text></View>
+          <View style={styles.cabLinea}><Text style={styles.cabEtq}>Banco:</Text><Text>{cabecera.banco}</Text></View>
+          <View style={styles.cabLinea}><Text style={styles.cabEtq}>C. Corriente:</Text><Text>{cabecera.cuentaCorriente}</Text></View>
           <View style={styles.cabLinea}><Text style={styles.cabEtq}>Período:</Text><Text>{cabecera.desde} a {cabecera.hasta}</Text></View>
           <View style={styles.cabLinea}><Text style={styles.cabEtq}>Fecha rendición:</Text><Text>{cabecera.fechaRendicion}</Text></View>
         </View>

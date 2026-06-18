@@ -1,6 +1,6 @@
 import { getBearerToken } from "@/lib/auth";
 import { autenticar } from "@/lib/auth-server";
-import { listGastos, getUsuario } from "@/lib/sheets";
+import { listGastos, getUsuario, listUsuarios } from "@/lib/sheets";
 import { filtrarGastosPorRol } from "@/lib/gastos-rol";
 import { filtrarPorRango } from "@/lib/dashboard";
 import { construirReporte } from "@/lib/reporte";
@@ -21,16 +21,23 @@ export async function GET(req: Request) {
   }
 
   try {
-    const [todos, usuario] = await Promise.all([
+    const [todos, usuario, usuarios] = await Promise.all([
       listGastos(),
       getUsuario(auth.usuario.email),
+      listUsuarios(),
     ]);
     if (!usuario) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
+    const nombres = new Map(usuarios.map((u) => [u.email.toLowerCase(), u.nombre]));
     const visibles = filtrarGastosPorRol(todos, auth.usuario);
     const delRango = filtrarPorRango(visibles, desde, hasta);
     const hoy = new Date().toISOString().slice(0, 10);
-    const modelo = construirReporte(usuario, delRango, { desde, hasta, fechaRendicion: hoy });
+    const modelo = construirReporte(usuario, delRango, {
+      desde,
+      hasta,
+      fechaRendicion: hoy,
+      nombrePorEmail: (email) => nombres.get(email.toLowerCase()) ?? email,
+    });
 
     const buffer = await renderReportePdf(modelo);
     return new NextResponse(new Uint8Array(buffer), {
