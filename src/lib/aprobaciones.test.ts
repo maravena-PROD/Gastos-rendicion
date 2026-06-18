@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { tieneAlcance, puedeAprobar, gastosPorAprobar } from "./aprobaciones";
+import { tieneAlcance, puedeAprobar, gastosPorAprobar, puedeEditar } from "./aprobaciones";
 import type { SesionUsuario } from "./auth";
 import type { Gasto } from "./types";
 
@@ -53,5 +53,18 @@ describe("gastosPorAprobar", () => {
       gasto({ id: "d", usuarioEmail: "ger@bosca.cl" }), // propio -> no (acotado)
     ];
     expect(gastosPorAprobar(lista, s).map((g) => g.id)).toEqual(["a"]);
+  });
+});
+
+describe("puedeEditar", () => {
+  it("el dueño puede editar su gasto Rechazado", () => {
+    expect(puedeEditar(sesion({ email: "u@bosca.cl" }), gasto({ estado: "Rechazado", usuarioEmail: "U@bosca.cl" }))).toBe(true);
+  });
+  it("no puede si no es Rechazado", () => {
+    expect(puedeEditar(sesion({ email: "u@bosca.cl" }), gasto({ estado: "Registrado", usuarioEmail: "u@bosca.cl" }))).toBe(false);
+    expect(puedeEditar(sesion({ email: "u@bosca.cl" }), gasto({ estado: "Aprobado", usuarioEmail: "u@bosca.cl" }))).toBe(false);
+  });
+  it("no puede editar el gasto de otro", () => {
+    expect(puedeEditar(sesion({ email: "u@bosca.cl" }), gasto({ estado: "Rechazado", usuarioEmail: "otro@bosca.cl" }))).toBe(false);
   });
 });

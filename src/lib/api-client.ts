@@ -162,3 +162,11 @@ export function decidirGasto(
     body: JSON.stringify({ decision, motivo }),
   });
 }
+
+/** Edita un gasto rechazado y lo reenvía (vuelve a Registrado). */
+export function editarGasto(id: string, payload: GuardarGastoInput): Promise<{ gasto: Gasto }> {
+  return pedir<{ gasto: Gasto }>(`/api/gastos/${id}/editar`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AuthGate } from "@/components/AuthGate";
 import { getIdTokenActual } from "@/lib/firebase-client";
-import { obtenerGastos, obtenerGastoApi, type ResumenGastoApi } from "@/lib/api-client";
-import type { Gasto } from "@/lib/types";
+import { obtenerGastos, obtenerGastoApi, obtenerAprobaciones, editarGasto, obtenerCentrosCosto, obtenerPerfil, type ResumenGastoApi, type GuardarGastoInput } from "@/lib/api-client";
+import type { Gasto, CentroCostoEntry } from "@/lib/types";
+import { TarjetaConfirmacion } from "@/components/chat/TarjetaConfirmacion";
 import {
   filtrarPorRango,
   porTipoRendicion,
@@ -14,6 +15,8 @@ import {
   porUsuario,
   tendenciaPorDia,
   contarPendientes,
+  aprobadosPorTipo,
+  rechazados,
 } from "@/lib/dashboard";
 import { formatCLP } from "@/lib/format";
 import { GraficoCategorias } from "@/components/dashboard/GraficoCategorias";
@@ -26,12 +29,17 @@ const usd = (v: number) =>
 function Dashboard() {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [rol, setRol] = useState<string>("");
+  const [apruebaCc, setApruebaCc] = useState<string[]>([]);
+  const [pendientesAprob, setPendientesAprob] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [desde, setDesde] = useState<string>("");
   const [hasta, setHasta] = useState<string>("");
   const [gastoApi, setGastoApi] = useState<ResumenGastoApi | null>(null);
   const [descargando, setDescargando] = useState(false);
+  const [catalogoCC, setCatalogoCC] = useState<CentroCostoEntry[]>([]);
+  const [cuenta, setCuenta] = useState({ banco: "", cuentaCorriente: "" });
+  const [editando, setEditando] = useState<Gasto | null>(null);
 
   useEffect(() => {
     async function cargar() {
@@ -39,7 +47,11 @@ function Dashboard() {
         const token = await getIdTokenActual();
         if (token) {
           const meRes = await fetch("/api/me", { headers: { Authorization: `Bearer ${token}` } });
-          if (meRes.ok) setRol((await meRes.json()).usuario.rol);
+          if (meRes.ok) {
+            const u = (await meRes.json()).usuario;
+            setRol(u.rol);
+            setApruebaCc(u.apruebaCc ?? []);
+          }
         }
         const { gastos } = await obtenerGastos();
         setGastos(gastos);
@@ -53,9 +65,16 @@ function Dashboard() {
       obtenerGastoApi()
         .then(setGastoApi)
         .catch(() => {});
+      obtenerCentrosCosto().then(({ centros }) => setCatalogoCC(centros)).catch(() => {});
+      obtenerPerfil().then((p) => setCuenta({ banco: p.banco, cuentaCorriente: p.cuentaCorriente })).catch(() => {});
     }
     cargar();
   }, []);
+
+  useEffect(() => {
+    if (apruebaCc.length === 0) return;
+    obtenerAprobaciones().then(({ gastos }) => setPendientesAprob(gastos.length)).catch(() => {});
+  }, [apruebaCc.length]);
 
   const fechas = useMemo(
     () => gastos.map((g) => g.fechaDocumento).filter(Boolean).sort(),
@@ -95,12 +114,19 @@ function Dashboard() {
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between border-b border-bosca-carbon bg-bosca-carbon px-4 py-3">
         <span className="font-semibold text-bosca-crema">🔥 Bosca · Dashboard</span>
-        <Link
-          href="/"
-          className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10"
-        >
-          ← Chat
-        </Link>
+        <div className="flex items-center gap-3">
+          {apruebaCc.length > 0 && (
+            <Link href="/aprobaciones" className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10">
+              Aprobaciones{pendientesAprob > 0 ? ` (${pendientesAprob})` : ""}
+            </Link>
+          )}
+          <Link
+            href="/"
+            className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10"
+          >
+            ← Chat
+          </Link>
+        </div>
       </header>
 
       <div className="flex-1 space-y-5 overflow-y-auto p-4">
@@ -162,6 +188,58 @@ function Dashboard() {
             </section>
 
             <section className="rounded-2xl border border-bosca-gris bg-white p-4">
+              <h2 className="mb-2 text-sm font-semibold text-gray-700">Estado de mis gastos</h2>
+              {(() => {
+                const aprob = aprobadosPorTipo(delRango);
+                const rech = rechazados(delRango);
+                const pend = contarPendientes(delRango);
+                return (
+                  <div className="space-y-3 text-sm">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-gray-500">Aprobado (Rendición)</p>
+                        <p className="text-lg font-bold text-gray-900">{formatCLP(aprob.rendicion)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Aprobado (Devolución)</p>
+                        <p className="text-lg font-bold text-bosca-ambar">{formatCLP(aprob.devolucion)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Pendientes</p>
+                        <p className="text-lg font-bold text-gray-900">{pend}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-gray-500">Rechazados ({rech.length})</p>
+                      {rech.length === 0 ? (
+                        <p className="text-xs text-gray-400">No tienes gastos rechazados.</p>
+                      ) : (
+                        <ul className="divide-y">
+                          {rech.map((g) => (
+                            <li key={g.id} className="flex items-start justify-between gap-2 py-1.5">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-gray-700">
+                                  {g.fechaDocumento} · {g.comercio} · {formatCLP(g.monto)}
+                                </p>
+                                {g.motivo && <p className="text-xs text-bosca-burdeo">Motivo: {g.motivo}</p>}
+                              </div>
+                              <button
+                                onClick={() => setEditando(g)}
+                                className="shrink-0 rounded-lg border border-bosca-gris px-3 py-1 text-xs text-bosca-carbon hover:bg-bosca-gris"
+                              >
+                                Corregir
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </section>
+
+            <section className="rounded-2xl border border-bosca-gris bg-white p-4">
               <h2 className="mb-2 text-sm font-semibold text-gray-700">Por categoría</h2>
               <GraficoCategorias datos={porCategoria(delRango)} />
             </section>
@@ -205,6 +283,51 @@ function Dashboard() {
           </section>
         )}
       </div>
+
+      {editando && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4">
+          <div className="w-full max-w-md">
+            <TarjetaConfirmacion
+              borrador={{
+                comercio: editando.comercio,
+                monto: editando.monto,
+                fechaDocumento: editando.fechaDocumento,
+                categoria: editando.categoria,
+                rutEmisor: editando.rutEmisor || null,
+                numeroDocumento: editando.numeroDocumento || null,
+                direccion: editando.direccion || null,
+                tipoDocumento: editando.tipoDocumento,
+                montoNeto: editando.montoNeto,
+                iva: editando.iva,
+              }}
+              inicial={{
+                tipoRendicion: editando.tipoRendicion,
+                centroCostoCodigo: editando.imputacion.centroCostoCodigo,
+                areaCodigo: editando.imputacion.areaCodigo,
+                ubicacionCodigo: editando.imputacion.ubicacionCodigo,
+                observacion: editando.observacion,
+              }}
+              imagenUrl={editando.imagenUrl || undefined}
+              imagenDriveId={editando.imagenDriveId || undefined}
+              catalogo={catalogoCC}
+              cuentaActual={cuenta}
+              titulo="Corregir gasto"
+              textoConfirmar="Reenviar"
+              deshabilitado={false}
+              onConfirmar={async (datos: GuardarGastoInput) => {
+                try {
+                  await editarGasto(editando.id, datos);
+                  setGastos((xs) => xs.map((x) => (x.id === editando.id ? { ...x, estado: "Registrado" } : x)));
+                  setEditando(null);
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "No se pudo reenviar el gasto.");
+                }
+              }}
+              onCancelar={() => setEditando(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

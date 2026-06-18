@@ -9,6 +9,8 @@ import {
   mesesDisponibles,
   filtrarPorRango,
   porTipoRendicion,
+  aprobadosPorTipo,
+  rechazados,
 } from "./dashboard";
 import { IMPUTACION_VACIA } from "./types";
 import type { Gasto } from "./types";
@@ -144,5 +146,24 @@ describe("porTipoRendicion", () => {
   it("suma montos por tipo", () => {
     const gastosT = [gR("2026-06-01", 100, "Rendicion"), gR("2026-06-02", 200, "Devolucion"), gR("2026-06-03", 50, "Devolucion")];
     expect(porTipoRendicion(gastosT)).toEqual({ rendicion: 100, devolucion: 250 });
+  });
+});
+
+describe("aprobadosPorTipo", () => {
+  it("suma solo Aprobados, separando rendición y devolución", () => {
+    const datos = [
+      g({ estado: "Aprobado", tipoRendicion: "Rendicion", monto: 1000 }),
+      g({ estado: "Aprobado", tipoRendicion: "Devolucion", monto: 500 }),
+      g({ estado: "Registrado", tipoRendicion: "Rendicion", monto: 999 }), // ignorado
+      g({ estado: "Rechazado", tipoRendicion: "Devolucion", monto: 999 }), // ignorado
+    ];
+    expect(aprobadosPorTipo(datos)).toEqual({ rendicion: 1000, devolucion: 500, total: 1500 });
+  });
+});
+
+describe("rechazados", () => {
+  it("devuelve solo los gastos en estado Rechazado", () => {
+    const datos = [g({ id: "a", estado: "Rechazado" }), g({ id: "b", estado: "Aprobado" })];
+    expect(rechazados(datos).map((x) => x.id)).toEqual(["a"]);
   });
 });

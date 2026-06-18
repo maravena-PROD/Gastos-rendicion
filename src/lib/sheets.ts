@@ -189,8 +189,8 @@ export async function appendGasto(g: Gasto): Promise<void> {
   });
 }
 
-/** Reescribe la fila de un gasto (localizada por id en col A) con su estado y decisión. */
-export async function actualizarDecisionGasto(gasto: Gasto): Promise<void> {
+/** Reescribe la fila de un gasto (localizada por id en col A) con sus campos actuales. */
+export async function actualizarGasto(gasto: Gasto): Promise<void> {
   const sheets = getSheetsClient();
   const spreadsheetId = getEnv("GOOGLE_SHEETS_ID");
   const res = await sheets.spreadsheets.values.get({

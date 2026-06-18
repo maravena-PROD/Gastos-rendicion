@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getBearerToken } from "@/lib/auth";
 import { autenticar } from "@/lib/auth-server";
-import { listGastos, actualizarDecisionGasto } from "@/lib/sheets";
+import { listGastos, actualizarGasto } from "@/lib/sheets";
 import { puedeAprobar } from "@/lib/aprobaciones";
 import type { EstadoGasto } from "@/lib/types";
 
@@ -43,7 +43,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     motivo: typeof body.motivo === "string" ? body.motivo.trim() : "",
   };
   try {
-    await actualizarDecisionGasto(decidido);
+    await actualizarGasto(decidido);
   } catch {
     return NextResponse.json({ error: "No se pudo guardar la decisión" }, { status: 502 });
   }
