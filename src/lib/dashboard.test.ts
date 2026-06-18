@@ -14,6 +14,8 @@ import {
   filtrarPorAnio,
   aniosDisponibles,
   porCentroCosto,
+  porDimension,
+  arbolPorImputacion,
 } from "./dashboard";
 import { IMPUTACION_VACIA } from "./types";
 import type { Gasto } from "./types";
@@ -213,6 +215,61 @@ describe("porCentroCosto", () => {
     expect(porCentroCosto(datos)).toEqual([
       { codigo: "C0200", detalle: "Bodega", total: 60000 },
       { codigo: "C0100", detalle: "Ventas", total: 50000 },
+    ]);
+  });
+});
+
+function gImp(monto: number, cc: [string, string], area: [string, string], ubic: [string, string]): Gasto {
+  return g({
+    monto,
+    imputacion: {
+      centroCostoCodigo: cc[0], centroCostoDetalle: cc[1],
+      areaCodigo: area[0], areaDetalle: area[1],
+      ubicacionCodigo: ubic[0], ubicacionDetalle: ubic[1],
+    },
+  });
+}
+
+const imputados = [
+  gImp(30000, ["C0200", "Comercial"], ["A1", "Ventas"], ["U1", "Santiago"]),
+  gImp(20000, ["C0200", "Comercial"], ["A1", "Ventas"], ["U2", "Talca"]),
+  gImp(10000, ["C0200", "Comercial"], ["A2", "Marketing"], ["U1", "Santiago"]),
+  gImp(5000, ["C0100", "Bodega"], ["A3", "Logística"], ["U2", "Talca"]),
+];
+
+describe("porDimension", () => {
+  it("agrupa por área, de mayor a menor", () => {
+    expect(porDimension(imputados, "area")).toEqual([
+      { codigo: "A1", detalle: "Ventas", total: 50000 },
+      { codigo: "A2", detalle: "Marketing", total: 10000 },
+      { codigo: "A3", detalle: "Logística", total: 5000 },
+    ]);
+  });
+  it("agrupa por ubicación", () => {
+    expect(porDimension(imputados, "ubicacion")).toEqual([
+      { codigo: "U1", detalle: "Santiago", total: 40000 },
+      { codigo: "U2", detalle: "Talca", total: 25000 },
+    ]);
+  });
+});
+
+describe("arbolPorImputacion", () => {
+  it("construye el árbol CC → área → ubicación con total y cantidad, ordenado por total", () => {
+    const arbol = arbolPorImputacion(imputados);
+    expect(arbol.map((n) => [n.codigo, n.total, n.cantidad])).toEqual([
+      ["C0200", 60000, 3],
+      ["C0100", 5000, 1],
+    ]);
+    const comercial = arbol[0];
+    expect(comercial.detalle).toBe("Comercial");
+    expect(comercial.hijos?.map((n) => [n.codigo, n.total, n.cantidad])).toEqual([
+      ["A1", 50000, 2],
+      ["A2", 10000, 1],
+    ]);
+    const a1 = comercial.hijos?.[0];
+    expect(a1?.hijos?.map((n) => [n.codigo, n.total, n.cantidad])).toEqual([
+      ["U1", 30000, 1],
+      ["U2", 20000, 1],
     ]);
   });
 });

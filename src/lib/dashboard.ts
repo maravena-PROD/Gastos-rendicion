@@ -77,22 +77,100 @@ export function aniosDisponibles(gastos: Gasto[]): string[] {
   return [...set].sort((a, b) => b.localeCompare(a));
 }
 
-/** Total agrupado por centro de costo (código + detalle), de mayor a menor. */
-export function porCentroCosto(
+/** Un grupo de imputación (centro de costo, área o ubicación) con su total. */
+export interface GrupoImputacion {
+  codigo: string;
+  detalle: string;
+  total: number;
+}
+
+/** Las tres dimensiones de imputación por las que se puede agrupar o filtrar. */
+export type DimensionImputacion = "centroCosto" | "area" | "ubicacion";
+
+/** Selector de código y detalle de una dimensión de imputación. */
+function selectorDimension(dim: DimensionImputacion): {
+  codigoDe: (g: Gasto) => string;
+  detalleDe: (g: Gasto) => string;
+} {
+  switch (dim) {
+    case "area":
+      return { codigoDe: (g) => g.imputacion.areaCodigo, detalleDe: (g) => g.imputacion.areaDetalle };
+    case "ubicacion":
+      return { codigoDe: (g) => g.imputacion.ubicacionCodigo, detalleDe: (g) => g.imputacion.ubicacionDetalle };
+    default:
+      return { codigoDe: (g) => g.imputacion.centroCostoCodigo, detalleDe: (g) => g.imputacion.centroCostoDetalle };
+  }
+}
+
+/** Agrupa montos por un campo de imputación (código + detalle), de mayor a menor. */
+function agrupar(
   gastos: Gasto[],
-): { codigo: string; detalle: string; total: number }[] {
+  codigoDe: (g: Gasto) => string,
+  detalleDe: (g: Gasto) => string,
+): GrupoImputacion[] {
   const mapa = new Map<string, { detalle: string; total: number }>();
   for (const g of gastos) {
-    const codigo = g.imputacion.centroCostoCodigo;
+    const codigo = codigoDe(g);
     const previo = mapa.get(codigo);
     mapa.set(codigo, {
-      detalle: previo?.detalle || g.imputacion.centroCostoDetalle,
+      detalle: previo?.detalle || detalleDe(g),
       total: (previo?.total ?? 0) + g.monto,
     });
   }
   return [...mapa.entries()]
     .map(([codigo, { detalle, total }]) => ({ codigo, detalle, total }))
     .sort((a, b) => b.total - a.total);
+}
+
+/** Total agrupado por una dimensión de imputación (CC, área o ubicación), de mayor a menor. */
+export function porDimension(gastos: Gasto[], dim: DimensionImputacion): GrupoImputacion[] {
+  const { codigoDe, detalleDe } = selectorDimension(dim);
+  return agrupar(gastos, codigoDe, detalleDe);
+}
+
+/** Total agrupado por centro de costo (código + detalle), de mayor a menor. */
+export function porCentroCosto(gastos: Gasto[]): GrupoImputacion[] {
+  return porDimension(gastos, "centroCosto");
+}
+
+/** Un nodo del árbol de imputación, con su total, cantidad de gastos e hijos. */
+export interface NodoImputacion {
+  codigo: string;
+  detalle: string;
+  total: number;
+  cantidad: number;
+  hijos?: NodoImputacion[];
+}
+
+/** Construye un nivel del árbol agrupando por la primera dimensión y recurriendo en el resto. */
+function construirNivel(gastos: Gasto[], dims: DimensionImputacion[]): NodoImputacion[] {
+  if (dims.length === 0) return [];
+  const [dim, ...resto] = dims;
+  const { codigoDe, detalleDe } = selectorDimension(dim);
+  const grupos = new Map<string, Gasto[]>();
+  for (const g of gastos) {
+    const codigo = codigoDe(g);
+    const lista = grupos.get(codigo);
+    if (lista) lista.push(g);
+    else grupos.set(codigo, [g]);
+  }
+  return [...grupos.values()]
+    .map((lista) => ({
+      codigo: codigoDe(lista[0]),
+      detalle: lista.map(detalleDe).find(Boolean) ?? "",
+      total: lista.reduce((acc, g) => acc + g.monto, 0),
+      cantidad: lista.length,
+      hijos: resto.length ? construirNivel(lista, resto) : undefined,
+    }))
+    .sort((a, b) => b.total - a.total);
+}
+
+/**
+ * Árbol jerárquico Centro de costo → Área → Ubicación. Cada nodo lleva su total
+ * y la cantidad de gastos. Pensado para una tabla dinámica expandible.
+ */
+export function arbolPorImputacion(gastos: Gasto[]): NodoImputacion[] {
+  return construirNivel(gastos, ["centroCosto", "area", "ubicacion"]);
 }
 
 /** Suma de montos separada por tipo de rendición. */
