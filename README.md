@@ -75,6 +75,12 @@ Las APIs externas (Google, Claude, Firebase Admin) están mockeadas, así que la
 credenciales. La verificación funcional en vivo se documenta al final de cada plan y en el Manual de
 Instalación.
 
+## Despliegue
+
+Producción en **Vercel** (`bosca-gastos.vercel.app`). El repositorio está conectado a Vercel:
+cada `push` a `master` despliega automáticamente a producción; las demás ramas generan
+*preview deployments*.
+
 ## Roadmap (fuera de v1)
 
 - Registro por **voz** (audio → texto).
