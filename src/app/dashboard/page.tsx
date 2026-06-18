@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { AuthGate } from "@/components/AuthGate";
+import { AppShell } from "@/components/layout/AppShell";
 import { getIdTokenActual } from "@/lib/firebase-client";
 import { obtenerGastos, obtenerGastoApi, obtenerAprobaciones, editarGasto, obtenerCentrosCosto, obtenerPerfil, type ResumenGastoApi, type GuardarGastoInput } from "@/lib/api-client";
 import type { Gasto, CentroCostoEntry } from "@/lib/types";
@@ -39,6 +39,7 @@ function Dashboard() {
   const [descargando, setDescargando] = useState(false);
   const [catalogoCC, setCatalogoCC] = useState<CentroCostoEntry[]>([]);
   const [cuenta, setCuenta] = useState({ banco: "", cuentaCorriente: "" });
+  const [usuario, setUsuario] = useState({ nombre: "", area: "", cargo: "" });
   const [editando, setEditando] = useState<Gasto | null>(null);
 
   useEffect(() => {
@@ -66,7 +67,12 @@ function Dashboard() {
         .then(setGastoApi)
         .catch(() => {});
       obtenerCentrosCosto().then(({ centros }) => setCatalogoCC(centros)).catch(() => {});
-      obtenerPerfil().then((p) => setCuenta({ banco: p.banco, cuentaCorriente: p.cuentaCorriente })).catch(() => {});
+      obtenerPerfil()
+        .then((p) => {
+          setCuenta({ banco: p.banco, cuentaCorriente: p.cuentaCorriente });
+          setUsuario({ nombre: p.nombre, area: p.area, cargo: p.cargo });
+        })
+        .catch(() => {});
     }
     cargar();
   }, []);
@@ -111,25 +117,12 @@ function Dashboard() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex items-center justify-between border-b border-bosca-carbon bg-bosca-carbon px-4 py-3">
-        <span className="font-semibold text-bosca-crema">🔥 Bosca · Dashboard</span>
-        <div className="flex items-center gap-3">
-          {apruebaCc.length > 0 && (
-            <Link href="/aprobaciones" className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10">
-              Aprobaciones{pendientesAprob > 0 ? ` (${pendientesAprob})` : ""}
-            </Link>
-          )}
-          <Link
-            href="/"
-            className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10"
-          >
-            ← Chat
-          </Link>
-        </div>
-      </header>
-
-      <div className="flex-1 space-y-5 overflow-y-auto p-4">
+    <AppShell
+      titulo="Dashboard"
+      usuario={{ nombre: usuario.nombre, area: usuario.area, cargo: usuario.cargo, apruebaCc }}
+      pendientes={pendientesAprob}
+    >
+      <div className="mx-auto h-full w-full max-w-5xl space-y-5 overflow-y-auto p-4 sm:p-6">
         {cargando ? (
           <p className="text-center text-sm text-gray-400">Cargando…</p>
         ) : error ? (
@@ -138,7 +131,7 @@ function Dashboard() {
           <p className="text-center text-sm text-gray-400">Aún no hay gastos registrados.</p>
         ) : (
           <>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-bosca-gris bg-white p-3">
               <label className="text-sm text-gray-500">Desde:</label>
               <input
                 type="date"
@@ -156,7 +149,7 @@ function Dashboard() {
               <button
                 onClick={descargarReporte}
                 disabled={descargando || delRango.length === 0}
-                className="rounded-lg bg-bosca-burdeo px-3 py-1 text-sm font-medium text-white hover:bg-bosca-burdeo-h disabled:opacity-40"
+                className="ml-auto rounded-lg bg-bosca-burdeo px-3 py-1.5 text-sm font-medium text-white hover:bg-bosca-burdeo-h disabled:opacity-40"
               >
                 {descargando ? "Generando…" : "Descargar PDF"}
               </button>
@@ -328,7 +321,7 @@ function Dashboard() {
           </div>
         </div>
       )}
-    </div>
+    </AppShell>
   );
 }
 

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { AuthGate } from "@/components/AuthGate";
-import { obtenerAprobaciones, decidirGasto } from "@/lib/api-client";
+import { AppShell } from "@/components/layout/AppShell";
+import { obtenerAprobaciones, decidirGasto, obtenerPerfil } from "@/lib/api-client";
 import type { Gasto } from "@/lib/types";
 import { formatCLP } from "@/lib/format";
 
@@ -13,12 +13,16 @@ function Aprobaciones() {
   const [error, setError] = useState<string | null>(null);
   const [motivos, setMotivos] = useState<Record<string, string>>({});
   const [procesando, setProcesando] = useState<string | null>(null);
+  const [usuario, setUsuario] = useState({ nombre: "", area: "", cargo: "", apruebaCc: [] as string[] });
 
   useEffect(() => {
     obtenerAprobaciones()
       .then((r) => setGastos(r.gastos))
       .catch(() => setError("No se pudieron cargar las aprobaciones."))
       .finally(() => setCargando(false));
+    obtenerPerfil()
+      .then((p) => setUsuario({ nombre: p.nombre, area: p.area, cargo: p.cargo, apruebaCc: p.apruebaCc }))
+      .catch(() => {});
   }, []);
 
   async function decidir(g: Gasto, decision: "Aprobado" | "Rechazado") {
@@ -40,15 +44,8 @@ function Aprobaciones() {
   }
 
   return (
-    <div className="flex h-screen flex-col">
-      <header className="flex items-center justify-between border-b border-bosca-carbon bg-bosca-carbon px-4 py-3">
-        <span className="font-semibold text-bosca-crema">🔥 Bosca · Aprobaciones</span>
-        <Link href="/" className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10">
-          ← Chat
-        </Link>
-      </header>
-
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+    <AppShell titulo="Aprobaciones" usuario={usuario} pendientes={gastos.length}>
+      <div className="mx-auto h-full w-full max-w-3xl space-y-3 overflow-y-auto p-4 sm:p-6">
         {error && <p className="text-center text-sm text-bosca-burdeo">{error}</p>}
         {cargando ? (
           <p className="text-center text-sm text-gray-400">Cargando…</p>
@@ -98,7 +95,7 @@ function Aprobaciones() {
           ))
         )}
       </div>
-    </div>
+    </AppShell>
   );
 }
 
