@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { AuthGate } from "@/components/AuthGate";
-import { cerrarSesion, getIdTokenActual } from "@/lib/firebase-client";
+import { getIdTokenActual } from "@/lib/firebase-client";
+import { AppShell } from "@/components/layout/AppShell";
 import {
   extraerDesdeTexto,
   extraerDesdeImagen,
@@ -177,37 +177,18 @@ function Chat({ perfil }: { perfil: Perfil }) {
   }
 
   return (
-    <div className="flex h-screen flex-col">
-      <header className="flex items-center justify-between border-b border-bosca-carbon bg-bosca-carbon px-4 py-3">
-        <span className="font-semibold text-bosca-crema">🔥 Bosca · Rendición de Gastos</span>
-        <div className="flex items-center gap-3 text-sm text-bosca-crema/70">
-          <span>
-            {perfil.nombre} · {perfil.area}
-          </span>
-          {perfil.apruebaCc.length > 0 && (
-            <Link
-              href="/aprobaciones"
-              className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10"
-            >
-              Aprobaciones{pendientes > 0 ? ` (${pendientes})` : ""}
-            </Link>
-          )}
-          <Link
-            href="/dashboard"
-            className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10"
-          >
-            Dashboard
-          </Link>
-          <button
-            onClick={() => cerrarSesion()}
-            className="rounded-lg border border-white/25 px-3 py-1 text-xs text-bosca-crema hover:bg-white/10"
-          >
-            Salir
-          </button>
-        </div>
-      </header>
-
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+    <AppShell
+      titulo="Registrar gasto"
+      usuario={{
+        nombre: perfil.nombre,
+        area: perfil.area,
+        cargo: perfil.cargo,
+        apruebaCc: perfil.apruebaCc,
+      }}
+      pendientes={pendientes}
+    >
+      <div className="flex h-full flex-col">
+        <div className="mx-auto w-full max-w-3xl flex-1 space-y-3 overflow-y-auto p-4 sm:p-6">
         {mensajes.map((m, i) => {
           if (m.tipo === "texto") {
             return (
@@ -249,12 +230,15 @@ function Chat({ perfil }: { perfil: Perfil }) {
             </div>
           );
         })}
-        {procesando && <p className="text-center text-xs text-gray-400">Procesando…</p>}
-        <div ref={finRef} />
-      </div>
+          {procesando && <p className="text-center text-xs text-gray-400">Procesando…</p>}
+          <div ref={finRef} />
+        </div>
 
-      <BarraEntrada onTexto={onTexto} onArchivo={onArchivo} deshabilitado={procesando} />
-    </div>
+        <div className="mx-auto w-full max-w-3xl px-4 pb-2 sm:px-6">
+          <BarraEntrada onTexto={onTexto} onArchivo={onArchivo} deshabilitado={procesando} />
+        </div>
+      </div>
+    </AppShell>
   );
 }
 
