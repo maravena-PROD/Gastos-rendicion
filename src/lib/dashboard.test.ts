@@ -11,6 +11,9 @@ import {
   porTipoRendicion,
   aprobadosPorTipo,
   rechazados,
+  filtrarPorAnio,
+  aniosDisponibles,
+  porCentroCosto,
 } from "./dashboard";
 import { IMPUTACION_VACIA } from "./types";
 import type { Gasto } from "./types";
@@ -165,5 +168,51 @@ describe("rechazados", () => {
   it("devuelve solo los gastos en estado Rechazado", () => {
     const datos = [g({ id: "a", estado: "Rechazado" }), g({ id: "b", estado: "Aprobado" })];
     expect(rechazados(datos).map((x) => x.id)).toEqual(["a"]);
+  });
+});
+
+describe("filtrarPorAnio", () => {
+  it("filtra por el año de fechaDocumento", () => {
+    const datos = [
+      g({ id: "a", fechaDocumento: "2026-06-05" }),
+      g({ id: "b", fechaDocumento: "2026-01-31" }),
+      g({ id: "c", fechaDocumento: "2025-12-30" }),
+    ];
+    expect(filtrarPorAnio(datos, "2026").map((x) => x.id)).toEqual(["a", "b"]);
+  });
+  it("devuelve [] si no hay gastos en el año", () => {
+    expect(filtrarPorAnio(gastos, "2020")).toEqual([]);
+  });
+});
+
+describe("aniosDisponibles", () => {
+  it("devuelve los años presentes, de más reciente a más antiguo, sin repetir", () => {
+    const datos = [
+      g({ fechaDocumento: "2026-06-05" }),
+      g({ fechaDocumento: "2026-01-10" }),
+      g({ fechaDocumento: "2025-11-20" }),
+    ];
+    expect(aniosDisponibles(datos)).toEqual(["2026", "2025"]);
+  });
+});
+
+describe("porCentroCosto", () => {
+  function gcc(codigo: string, detalle: string, monto: number, id = ""): Gasto {
+    return g({
+      id,
+      monto,
+      imputacion: { ...IMPUTACION_VACIA, centroCostoCodigo: codigo, centroCostoDetalle: detalle },
+    });
+  }
+  it("agrupa por código de CC, conserva el detalle y ordena de mayor a menor", () => {
+    const datos = [
+      gcc("C0100", "Ventas", 30000),
+      gcc("C0200", "Bodega", 60000),
+      gcc("C0100", "Ventas", 20000),
+    ];
+    expect(porCentroCosto(datos)).toEqual([
+      { codigo: "C0200", detalle: "Bodega", total: 60000 },
+      { codigo: "C0100", detalle: "Ventas", total: 50000 },
+    ]);
   });
 });

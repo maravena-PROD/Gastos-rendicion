@@ -61,6 +61,16 @@ function IconoDashboard() {
   );
 }
 
+function IconoAnalisis() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" {...TRAZO}>
+      <path d="M4 19V5M4 19h16" />
+      <path d="M8 16l3.5-4 3 2.5L20 8" />
+      <path d="M16 8h4v4" />
+    </svg>
+  );
+}
+
 function IconoAprobar() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" {...TRAZO}>
@@ -82,6 +92,7 @@ function IconoSalir() {
 const NAV: ItemNav[] = [
   { href: "/", etiqueta: "Registrar gasto", icono: <IconoRegistrar /> },
   { href: "/dashboard", etiqueta: "Dashboard", icono: <IconoDashboard /> },
+  { href: "/analisis", etiqueta: "Análisis", icono: <IconoAnalisis />, soloAprobadores: true },
   { href: "/aprobaciones", etiqueta: "Aprobaciones", icono: <IconoAprobar />, soloAprobadores: true },
 ];
 

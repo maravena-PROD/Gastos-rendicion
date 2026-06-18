@@ -63,6 +63,38 @@ export function filtrarPorRango(gastos: Gasto[], desde: string, hasta: string): 
   return gastos.filter((g) => g.fechaDocumento >= desde && g.fechaDocumento <= hasta);
 }
 
+/** Filtra los gastos cuya fechaDocumento cae en el año dado ("AAAA"). */
+export function filtrarPorAnio(gastos: Gasto[], anio: string): Gasto[] {
+  return gastos.filter((g) => g.fechaDocumento.startsWith(anio));
+}
+
+/** Años presentes en los gastos (de fechaDocumento), de más reciente a más antiguo. */
+export function aniosDisponibles(gastos: Gasto[]): string[] {
+  const set = new Set<string>();
+  for (const g of gastos) {
+    if (g.fechaDocumento.length >= 4) set.add(g.fechaDocumento.slice(0, 4));
+  }
+  return [...set].sort((a, b) => b.localeCompare(a));
+}
+
+/** Total agrupado por centro de costo (código + detalle), de mayor a menor. */
+export function porCentroCosto(
+  gastos: Gasto[],
+): { codigo: string; detalle: string; total: number }[] {
+  const mapa = new Map<string, { detalle: string; total: number }>();
+  for (const g of gastos) {
+    const codigo = g.imputacion.centroCostoCodigo;
+    const previo = mapa.get(codigo);
+    mapa.set(codigo, {
+      detalle: previo?.detalle || g.imputacion.centroCostoDetalle,
+      total: (previo?.total ?? 0) + g.monto,
+    });
+  }
+  return [...mapa.entries()]
+    .map(([codigo, { detalle, total }]) => ({ codigo, detalle, total }))
+    .sort((a, b) => b.total - a.total);
+}
+
 /** Suma de montos separada por tipo de rendición. */
 export function porTipoRendicion(gastos: Gasto[]): { rendicion: number; devolucion: number } {
   return gastos.reduce(

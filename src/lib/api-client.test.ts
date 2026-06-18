@@ -73,6 +73,25 @@ describe("obtenerGastos", () => {
   });
 });
 
+import { obtenerAnalisisCc } from "./api-client";
+
+describe("obtenerAnalisisCc", () => {
+  it("hace GET a /api/analisis y devuelve gastos + alcance", async () => {
+    mockFetch(true, { gastos: [{ id: "g_1" }], alcance: ["C0100"] });
+    const r = await obtenerAnalisisCc();
+    expect(r.gastos).toHaveLength(1);
+    expect(r.alcance).toEqual(["C0100"]);
+    const [url, opts] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toBe("/api/analisis");
+    expect(opts.method).toBe("GET");
+  });
+
+  it("lanza con el mensaje del backend si falla", async () => {
+    mockFetch(false, { error: "No administras centros de costo" });
+    await expect(obtenerAnalisisCc()).rejects.toThrow("No administras centros de costo");
+  });
+});
+
 import { obtenerPerfil, guardarPerfil } from "./api-client";
 
 describe("obtenerPerfil", () => {

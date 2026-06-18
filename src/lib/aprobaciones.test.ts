@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { tieneAlcance, puedeAprobar, gastosPorAprobar, puedeEditar } from "./aprobaciones";
+import { tieneAlcance, puedeAprobar, gastosPorAprobar, puedeEditar, gastosEnAlcance } from "./aprobaciones";
 import type { SesionUsuario } from "./auth";
 import type { Gasto } from "./types";
 
@@ -53,6 +53,23 @@ describe("gastosPorAprobar", () => {
       gasto({ id: "d", usuarioEmail: "ger@bosca.cl" }), // propio -> no (acotado)
     ];
     expect(gastosPorAprobar(lista, s).map((g) => g.id)).toEqual(["a"]);
+  });
+});
+
+describe("gastosEnAlcance", () => {
+  function gCc(id: string, cc: string): Gasto {
+    return gasto({ id, imputacion: { centroCostoCodigo: cc, centroCostoDetalle: "", areaCodigo: "", areaDetalle: "", ubicacionCodigo: "", ubicacionDetalle: "" } });
+  }
+  const lista = [gCc("a", "C0100"), gCc("b", "C0200"), gCc("c", "C0300")];
+
+  it("incluye solo los gastos cuyo CC está en el alcance", () => {
+    expect(gastosEnAlcance(lista, ["C0100", "C0300"]).map((g) => g.id)).toEqual(["a", "c"]);
+  });
+  it("'*' incluye todos", () => {
+    expect(gastosEnAlcance(lista, ["*"]).map((g) => g.id)).toEqual(["a", "b", "c"]);
+  });
+  it("alcance vacío no incluye ninguno", () => {
+    expect(gastosEnAlcance(lista, [])).toEqual([]);
   });
 });
 

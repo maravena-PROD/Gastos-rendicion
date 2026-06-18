@@ -151,6 +151,14 @@ export function obtenerAprobaciones(): Promise<{ gastos: Gasto[] }> {
   return pedir<{ gastos: Gasto[] }>("/api/aprobaciones", { method: "GET" });
 }
 
+/**
+ * Gastos de los centros de costo que el usuario administra (su alcance `apruebaCc`),
+ * para la vista de análisis del gerente. Lanza si no administra ningún CC.
+ */
+export function obtenerAnalisisCc(): Promise<{ gastos: Gasto[]; alcance: string[] }> {
+  return pedir<{ gastos: Gasto[]; alcance: string[] }>("/api/analisis", { method: "GET" });
+}
+
 /** Registra la decisión (Aprobado/Rechazado) sobre un gasto. */
 export function decidirGasto(
   id: string,
