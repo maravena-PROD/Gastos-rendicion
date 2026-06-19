@@ -1,3 +1,16 @@
+const MESES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+
+/** Formatea un año-mes "AAAA-MM" como "Junio 2026". Devuelve el input si es inválido. */
+export function formatMes(anioMes: string): string {
+  const [anio, mes] = anioMes.split("-");
+  const i = parseInt(mes, 10) - 1;
+  if (!anio || i < 0 || i > 11) return anioMes;
+  return `${MESES[i]} ${anio}`;
+}
+
 /** Formatea un entero de pesos chilenos como "$45.000". */
 export function formatCLP(monto: number): string {
   const entero = Math.round(monto);

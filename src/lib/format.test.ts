@@ -1,5 +1,17 @@
 import { describe, it, expect } from "vitest";
-import { formatCLP, parseCLP } from "./format";
+import { formatCLP, parseCLP, formatMes } from "./format";
+
+describe("formatMes", () => {
+  it("formatea AAAA-MM como nombre de mes y año", () => {
+    expect(formatMes("2026-06")).toBe("Junio 2026");
+  });
+  it("acepta una fecha completa AAAA-MM-DD", () => {
+    expect(formatMes("2026-01-15")).toBe("Enero 2026");
+  });
+  it("devuelve el input si el mes es inválido", () => {
+    expect(formatMes("2026-13")).toBe("2026-13");
+  });
+});
 
 describe("formatCLP", () => {
   it("formatea entero a pesos con separador de miles", () => {

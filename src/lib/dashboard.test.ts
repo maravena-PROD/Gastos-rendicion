@@ -16,6 +16,7 @@ import {
   porCentroCosto,
   porDimension,
   arbolPorImputacion,
+  gastosPorMes,
 } from "./dashboard";
 import { IMPUTACION_VACIA } from "./types";
 import type { Gasto } from "./types";
@@ -116,6 +117,21 @@ describe("contarPendientes", () => {
 describe("mesesDisponibles", () => {
   it("devuelve los año-meses presentes, de más reciente a más antiguo", () => {
     expect(mesesDisponibles(gastos)).toEqual(["2026-06", "2026-05"]);
+  });
+});
+
+describe("gastosPorMes", () => {
+  it("agrupa por mes, de más reciente a más antiguo, con total y gastos por fecha desc", () => {
+    const r = gastosPorMes(gastos);
+    expect(r.map((m) => [m.anioMes, m.total])).toEqual([
+      ["2026-06", 65000],
+      ["2026-05", 5000],
+    ]);
+    // Dentro de junio, el más reciente (2026-06-10) va primero.
+    expect(r[0].gastos.map((g) => g.id)).toEqual(["b", "c", "a"]);
+  });
+  it("devuelve [] para lista vacía", () => {
+    expect(gastosPorMes([])).toEqual([]);
   });
 });
 

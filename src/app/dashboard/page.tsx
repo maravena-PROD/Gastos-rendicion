@@ -17,14 +17,31 @@ import {
   contarPendientes,
   aprobadosPorTipo,
   rechazados,
+  gastosPorMes,
 } from "@/lib/dashboard";
-import { formatCLP } from "@/lib/format";
+import { formatCLP, formatMes } from "@/lib/format";
 import { GraficoCategorias } from "@/components/dashboard/GraficoCategorias";
 import { GraficoTendencia } from "@/components/dashboard/GraficoTendencia";
 import { GraficoGastoApi } from "@/components/dashboard/GraficoGastoApi";
 
 const usd = (v: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
+
+const ESTILO_ESTADO: Record<string, string> = {
+  Aprobado: "bg-green-100 text-green-700",
+  Rechazado: "bg-red-100 text-bosca-burdeo",
+  Registrado: "bg-amber-100 text-amber-700",
+};
+
+/** Píldora de color con el estado del gasto. "Registrado" se muestra como "Pendiente". */
+function EstadoBadge({ estado }: { estado: string }) {
+  const etiqueta = estado === "Registrado" ? "Pendiente" : estado;
+  return (
+    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${ESTILO_ESTADO[estado] ?? "bg-gray-100 text-gray-600"}`}>
+      {etiqueta}
+    </span>
+  );
+}
 
 function Dashboard() {
   const [gastos, setGastos] = useState<Gasto[]>([]);
@@ -41,6 +58,7 @@ function Dashboard() {
   const [cuenta, setCuenta] = useState({ banco: "", cuentaCorriente: "" });
   const [usuario, setUsuario] = useState({ nombre: "", area: "", cargo: "" });
   const [editando, setEditando] = useState<Gasto | null>(null);
+  const [mesesAbiertos, setMesesAbiertos] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     async function cargar() {
@@ -94,7 +112,16 @@ function Dashboard() {
   );
   // El PDF solo exporta gastos aprobados; sin aprobados en el rango, no hay nada que descargar.
   const aprobadosEnRango = useMemo(() => delRango.filter((g) => g.estado === "Aprobado").length, [delRango]);
+  const meses = useMemo(() => gastosPorMes(delRango), [delRango]);
   const esAdmin = rol === "Administrador";
+
+  // Un mes está abierto si se alternó explícitamente; por defecto se abre el más reciente.
+  function mesAbierto(anioMes: string, indice: number): boolean {
+    return mesesAbiertos[anioMes] ?? indice === 0;
+  }
+  function alternarMes(anioMes: string, indice: number) {
+    setMesesAbiertos((prev) => ({ ...prev, [anioMes]: !(prev[anioMes] ?? indice === 0) }));
+  }
 
   async function descargarReporte() {
     setDescargando(true);
@@ -245,6 +272,92 @@ function Dashboard() {
                   </div>
                 );
               })()}
+            </section>
+
+            <section className="rounded-2xl border border-bosca-gris bg-white p-4 sm:p-5">
+              <h2 className="mb-3 text-sm font-semibold text-gray-700">Detalle de gastos por mes</h2>
+              {meses.length === 0 ? (
+                <p className="text-sm text-gray-400">No hay gastos en el período seleccionado.</p>
+              ) : (
+                <div className="space-y-3">
+                  {meses.map((m, i) => {
+                    const abierto = mesAbierto(m.anioMes, i);
+                    return (
+                      <div key={m.anioMes} className="overflow-hidden rounded-xl border border-bosca-gris">
+                        <button
+                          onClick={() => alternarMes(m.anioMes, i)}
+                          aria-expanded={abierto}
+                          className="flex w-full items-center gap-3 bg-bosca-crema/60 px-3 py-2.5 text-left hover:bg-bosca-crema"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${abierto ? "rotate-90" : ""}`}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="m9 6 6 6-6 6" />
+                          </svg>
+                          <span className="flex-1 text-sm font-semibold capitalize text-gray-800">
+                            {formatMes(m.anioMes)}
+                          </span>
+                          <span className="text-[11px] text-gray-400">{m.gastos.length} gastos</span>
+                          <span className="text-sm font-bold tabular-nums text-gray-900">{formatCLP(m.total)}</span>
+                        </button>
+                        {abierto && (
+                          <ul className="divide-y divide-bosca-gris">
+                            {m.gastos.map((gasto) => {
+                              const dia = gasto.fechaDocumento.slice(8, 10);
+                              const corregible = gasto.estado === "Rechazado";
+                              return (
+                                <li key={gasto.id} className="px-3 py-2.5">
+                                  <div className="flex items-center gap-3">
+                                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-bosca-crema text-center leading-none">
+                                      <span className="text-sm font-bold tabular-nums text-gray-700">{dia || "—"}</span>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-sm font-medium text-gray-800">
+                                        {gasto.comercio || "Sin comercio"}
+                                      </p>
+                                      <p className="flex flex-wrap items-center gap-x-2 text-xs text-gray-400">
+                                        <span>{gasto.categoria}</span>
+                                        {gasto.tipoRendicion === "Devolucion" && (
+                                          <span className="text-bosca-ambar">Devolución</span>
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div className="flex shrink-0 flex-col items-end gap-1">
+                                      <span className="text-sm font-bold tabular-nums text-gray-900">
+                                        {formatCLP(gasto.monto)}
+                                      </span>
+                                      <EstadoBadge estado={gasto.estado} />
+                                    </div>
+                                  </div>
+                                  {corregible && (
+                                    <div className="mt-1.5 flex items-center justify-between gap-2 pl-12">
+                                      <p className="min-w-0 flex-1 truncate text-xs text-bosca-burdeo">
+                                        {gasto.motivo ? `Motivo: ${gasto.motivo}` : "Rechazado"}
+                                      </p>
+                                      <button
+                                        onClick={() => setEditando(gasto)}
+                                        className="shrink-0 rounded-lg border border-bosca-gris px-2.5 py-1 text-xs text-bosca-carbon hover:bg-bosca-gris"
+                                      >
+                                        Corregir
+                                      </button>
+                                    </div>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </section>
 
             <div className="grid gap-4 lg:grid-cols-2">

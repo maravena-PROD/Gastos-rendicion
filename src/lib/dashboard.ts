@@ -195,3 +195,31 @@ export function aprobadosPorTipo(gastos: Gasto[]): { rendicion: number; devoluci
 export function rechazados(gastos: Gasto[]): Gasto[] {
   return gastos.filter((g) => g.estado === "Rechazado");
 }
+
+/** Un mes con sus gastos y el total, para el detalle agrupado. */
+export interface MesConGastos {
+  anioMes: string; // "AAAA-MM"
+  total: number;
+  gastos: Gasto[]; // ordenados por fechaDocumento, de más reciente a más antiguo
+}
+
+/**
+ * Agrupa los gastos por mes (de fechaDocumento), de más reciente a más antiguo.
+ * Dentro de cada mes los gastos quedan ordenados por fecha descendente.
+ */
+export function gastosPorMes(gastos: Gasto[]): MesConGastos[] {
+  const mapa = new Map<string, Gasto[]>();
+  for (const g of gastos) {
+    const mes = g.fechaDocumento.slice(0, 7);
+    const lista = mapa.get(mes);
+    if (lista) lista.push(g);
+    else mapa.set(mes, [g]);
+  }
+  return [...mapa.entries()]
+    .map(([anioMes, lista]) => ({
+      anioMes,
+      total: lista.reduce((acc, g) => acc + g.monto, 0),
+      gastos: [...lista].sort((a, b) => b.fechaDocumento.localeCompare(a.fechaDocumento)),
+    }))
+    .sort((a, b) => b.anioMes.localeCompare(a.anioMes));
+}
