@@ -1,11 +1,13 @@
 import { getIdTokenActual } from "./firebase-client";
-import type { ExtraccionGasto } from "./extraccion";
+import type { ExtraccionGasto, IntencionMensaje } from "./extraccion";
 import type { Gasto, Categoria, CentroCostoEntry, TipoRendicion, TipoDocumento } from "./types";
 
 /** Respuesta de las rutas de extracción. */
 export interface RespuestaExtraccion {
   extraccion: ExtraccionGasto;
   faltantes?: string[];
+  mensaje?: string;
+  intencion?: IntencionMensaje;
   /** Presente cuando el documento no se puede rendir (ej. factura no emitida a la empresa). */
   rechazo?: { motivo: string };
 }
@@ -63,10 +65,13 @@ export function extraerDesdeTexto(
 }
 
 /** Extrae datos de un gasto a partir de una imagen (base64 sin prefijo). */
-export function extraerDesdeImagen(base64: string): Promise<RespuestaExtraccion> {
+export function extraerDesdeImagen(
+  base64: string,
+  borrador?: ExtraccionGasto,
+): Promise<RespuestaExtraccion> {
   return pedir<RespuestaExtraccion>("/api/extraer", {
     method: "POST",
-    body: JSON.stringify({ base64 }),
+    body: JSON.stringify({ base64, borrador }),
   });
 }
 
