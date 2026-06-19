@@ -2,12 +2,16 @@ import { describe, it, expect } from "vitest";
 import {
   normalizarCategoria,
   normalizarTipoDocumento,
+  normalizarRut,
+  validarReceptorFactura,
   camposFaltantes,
   extraccionCompleta,
   hayDatosEsenciales,
   siguientePregunta,
   fusionarExtraccion,
+  RUT_EMPRESA,
   type ExtraccionGasto,
+  normalizarIntencion,
 } from "./extraccion";
 
 describe("normalizarCategoria", () => {
@@ -37,6 +41,8 @@ const vacia: ExtraccionGasto = {
   tipoDocumento: null,
   montoNeto: null,
   iva: null,
+  rutReceptor: null,
+  razonSocialReceptor: null,
 };
 
 const completa: ExtraccionGasto = {
@@ -132,5 +138,71 @@ describe("normalizarTipoDocumento", () => {
   it("devuelve null cuando no reconoce", () => {
     expect(normalizarTipoDocumento(null)).toBe(null);
     expect(normalizarTipoDocumento("vale vista")).toBe(null);
+  });
+});
+
+describe("normalizarRut", () => {
+  it("quita puntos, guion y espacios y baja a minúscula", () => {
+    expect(normalizarRut("79.610.100-8")).toBe("796101008");
+    expect(normalizarRut("76.543.219-K")).toBe("76543219k");
+    expect(normalizarRut(" 79 610 100 - 8 ")).toBe("796101008");
+  });
+  it("devuelve null para null, vacío o basura", () => {
+    expect(normalizarRut(null)).toBeNull();
+    expect(normalizarRut("")).toBeNull();
+    expect(normalizarRut("-")).toBeNull();
+  });
+});
+
+describe("validarReceptorFactura", () => {
+  const factura = (campos: Partial<ExtraccionGasto>): ExtraccionGasto => ({
+    ...completa,
+    tipoDocumento: "Factura",
+    ...campos,
+  });
+
+  it("no aplica a boletas ni a otros documentos (siempre ok)", () => {
+    expect(validarReceptorFactura({ ...completa, tipoDocumento: "Boleta" }).ok).toBe(true);
+    expect(validarReceptorFactura({ ...completa, tipoDocumento: null }).ok).toBe(true);
+  });
+
+  it("acepta la factura cuando el RUT receptor es el de la empresa", () => {
+    expect(validarReceptorFactura(factura({ rutReceptor: RUT_EMPRESA })).ok).toBe(true);
+  });
+
+  it("acepta aunque el RUT venga con otro formato", () => {
+    expect(validarReceptorFactura(factura({ rutReceptor: "796101008" })).ok).toBe(true);
+  });
+
+  it("rechaza cuando el RUT receptor es de otra empresa", () => {
+    const r = validarReceptorFactura(
+      factura({ rutReceptor: "76.543.219-7", razonSocialReceptor: "OTRA SPA" }),
+    );
+    expect(r.ok).toBe(false);
+    expect(r.motivo).toContain("no corresponde");
+  });
+
+  it("usa la razón social cuando no hay RUT receptor", () => {
+    expect(validarReceptorFactura(factura({ razonSocialReceptor: "Bosca Chile SA" })).ok).toBe(true);
+    expect(validarReceptorFactura(factura({ razonSocialReceptor: "Comercial XYZ Ltda" })).ok).toBe(false);
+  });
+
+  it("no bloquea cuando no se pudo leer el receptor (evita falsos rechazos)", () => {
+    expect(validarReceptorFactura(factura({ rutReceptor: null, razonSocialReceptor: null })).ok).toBe(true);
+  });
+});
+
+describe("normalizarIntencion", () => {
+  it("acepta una intención válida exacta", () => {
+    expect(normalizarIntencion("fuera_de_tema")).toBe("fuera_de_tema");
+    expect(normalizarIntencion("gasto")).toBe("gasto");
+  });
+  it("es tolerante a mayúsculas y espacios", () => {
+    expect(normalizarIntencion("  CORRECCION  ")).toBe("correccion");
+  });
+  it("devuelve 'otro' para valores desconocidos o null", () => {
+    expect(normalizarIntencion("cualquier_cosa")).toBe("otro");
+    expect(normalizarIntencion(null)).toBe("otro");
+    expect(normalizarIntencion("")).toBe("otro");
   });
 });
