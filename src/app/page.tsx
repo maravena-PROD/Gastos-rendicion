@@ -39,6 +39,8 @@ const EXTRACCION_VACIA: ExtraccionGasto = {
   tipoDocumento: null,
   montoNeto: null,
   iva: null,
+  rutReceptor: null,
+  razonSocialReceptor: null,
 };
 
 type Mensaje =
@@ -105,7 +107,11 @@ function Chat({ perfil }: { perfil: Perfil }) {
     agregarUsuario(texto);
     setProcesando(true);
     try {
-      const { extraccion } = await extraerDesdeTexto(texto, borrador);
+      const { extraccion, rechazo } = await extraerDesdeTexto(texto, borrador);
+      if (rechazo) {
+        agregarBot(rechazo.motivo);
+        return;
+      }
       const fusion = fusionarExtraccion(borrador, extraccion);
       setBorrador(fusion);
       avanzar(fusion, imagen);
@@ -126,6 +132,10 @@ function Chat({ perfil }: { perfil: Perfil }) {
         subirBoleta(base64, nombre),
         extraerDesdeImagen(base64),
       ]);
+      if (ext.rechazo) {
+        agregarBot(ext.rechazo.motivo);
+        return;
+      }
       const img = { url: sub.url, id: sub.id };
       setImagen(img);
       const fusion = fusionarExtraccion(borrador, ext.extraccion);

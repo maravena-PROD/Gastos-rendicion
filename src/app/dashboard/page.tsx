@@ -475,6 +475,8 @@ function Dashboard() {
                 tipoDocumento: editando.tipoDocumento,
                 montoNeto: editando.montoNeto,
                 iva: editando.iva,
+                rutReceptor: null,
+                razonSocialReceptor: null,
               }}
               inicial={{
                 tipoRendicion: editando.tipoRendicion,

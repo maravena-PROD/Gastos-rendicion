@@ -5,7 +5,9 @@ import type { Gasto, Categoria, CentroCostoEntry, TipoRendicion, TipoDocumento }
 /** Respuesta de las rutas de extracción. */
 export interface RespuestaExtraccion {
   extraccion: ExtraccionGasto;
-  faltantes: string[];
+  faltantes?: string[];
+  /** Presente cuando el documento no se puede rendir (ej. factura no emitida a la empresa). */
+  rechazo?: { motivo: string };
 }
 
 /** Datos para crear un gasto desde el cliente. */

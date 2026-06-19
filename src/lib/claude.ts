@@ -20,6 +20,8 @@ Reglas:
 - "numeroDocumento" es el folio/número de la boleta o factura (ej. "N° 12345", "Folio 000123", "Boleta Nº 45"). Devuelve solo el número, sin la palabra "boleta"/"factura"/"folio". null si no aparece.
 - "monto" es el TOTAL a pagar (con IVA incluido).
 - "montoNeto" e "iva" son enteros CLP si aparecen desglosados en el documento; si no aparecen, null.
+- "rutEmisor" y "comercio" identifican a QUIEN EMITE la factura (el proveedor/vendedor).
+- "rutReceptor" y "razonSocialReceptor" identifican al RECEPTOR: el cliente AL QUE se emite la factura. En una factura aparece como "Señor(es):", "Cliente", "Razón Social", junto a su propio "R.U.T.". NO confundas el receptor con el emisor. En boletas normalmente no hay receptor: devuelve null en ambos.
 - Si un dato no aparece o no estás seguro, devuelve null. NUNCA inventes datos.`;
 
 /** JSON schema de la extracción (todos los campos nullable). */
@@ -36,6 +38,8 @@ const SCHEMA = {
     tipoDocumento: { type: ["string", "null"] },
     montoNeto: { type: ["integer", "null"] },
     iva: { type: ["integer", "null"] },
+    rutReceptor: { type: ["string", "null"] },
+    razonSocialReceptor: { type: ["string", "null"] },
   },
   required: [
     "comercio",
@@ -48,6 +52,8 @@ const SCHEMA = {
     "tipoDocumento",
     "montoNeto",
     "iva",
+    "rutReceptor",
+    "razonSocialReceptor",
   ],
   additionalProperties: false,
 } as const;
@@ -82,6 +88,8 @@ export function parseExtraccion(res: { content: Array<{ type: string; text?: str
     tipoDocumento: normalizarTipoDocumento(datos.tipoDocumento ?? null),
     montoNeto: aMontoEntero(datos.montoNeto),
     iva: aMontoEntero(datos.iva),
+    rutReceptor: datos.rutReceptor ?? null,
+    razonSocialReceptor: datos.razonSocialReceptor ?? null,
   };
 }
 
