@@ -17,6 +17,7 @@ import {
   porDimension,
   arbolPorImputacion,
   gastosPorMes,
+  arbolMisGastos,
 } from "./dashboard";
 import { IMPUTACION_VACIA } from "./types";
 import type { Gasto } from "./types";
@@ -132,6 +133,30 @@ describe("gastosPorMes", () => {
   });
   it("devuelve [] para lista vacía", () => {
     expect(gastosPorMes([])).toEqual([]);
+  });
+});
+
+describe("arbolMisGastos", () => {
+  it("agrupa Mes ▸ Categoría ▸ gasto, ordenando meses y categorías", () => {
+    const arbol = arbolMisGastos(gastos);
+    // Meses de más reciente a más antiguo.
+    expect(arbol.map((m) => [m.etiqueta, m.total, m.cantidad])).toEqual([
+      ["2026-06", 65000, 3],
+      ["2026-05", 5000, 1],
+    ]);
+    // Junio: Combustible (50000) antes que Alimentación (15000).
+    const junio = arbol[0];
+    expect(junio.hijos?.map((c) => [c.etiqueta, c.total, c.cantidad])).toEqual([
+      ["Combustible", 50000, 2],
+      ["Alimentación", 15000, 1],
+    ]);
+    // La hoja lleva el gasto; combustible más reciente (id "b", 2026-06-10) primero.
+    const combustible = junio.hijos?.[0];
+    expect(combustible?.hijos?.map((h) => h.gasto?.id)).toEqual(["b", "a"]);
+    expect(combustible?.hijos?.[0].etiqueta).toBe("Sin comercio");
+  });
+  it("devuelve [] para lista vacía", () => {
+    expect(arbolMisGastos([])).toEqual([]);
   });
 });
 

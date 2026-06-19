@@ -223,3 +223,50 @@ export function gastosPorMes(gastos: Gasto[]): MesConGastos[] {
     }))
     .sort((a, b) => b.anioMes.localeCompare(a.anioMes));
 }
+
+/**
+ * Nodo de la tabla dinámica de "Mis gastos". Los nodos de agrupación (mes,
+ * categoría) llevan total y cantidad; las hojas llevan además el gasto.
+ */
+export interface NodoDetalle {
+  clave: string; // identificador único de la fila (ruta), para expandir/colapsar
+  etiqueta: string; // texto a mostrar (mes en "AAAA-MM", categoría o comercio)
+  total: number;
+  cantidad: number;
+  hijos?: NodoDetalle[];
+  gasto?: Gasto; // presente solo en las hojas (registros individuales)
+}
+
+/**
+ * Árbol Mes ▸ Categoría ▸ gasto para la tabla dinámica de "Mis gastos".
+ * Meses de más reciente a más antiguo; categorías por monto descendente; y los
+ * gastos de cada categoría por fecha descendente.
+ */
+export function arbolMisGastos(gastos: Gasto[]): NodoDetalle[] {
+  return gastosPorMes(gastos).map((m) => {
+    const porCat = new Map<Categoria, Gasto[]>();
+    for (const g of m.gastos) {
+      const lista = porCat.get(g.categoria);
+      if (lista) lista.push(g);
+      else porCat.set(g.categoria, [g]);
+    }
+    const hijos: NodoDetalle[] = [...porCat.entries()]
+      .map(([categoria, lista]) => ({
+        clave: `${m.anioMes}/${categoria}`,
+        etiqueta: categoria,
+        total: lista.reduce((acc, g) => acc + g.monto, 0),
+        cantidad: lista.length,
+        hijos: [...lista]
+          .sort((a, b) => b.fechaDocumento.localeCompare(a.fechaDocumento))
+          .map((g) => ({
+            clave: `${m.anioMes}/${categoria}/${g.id}`,
+            etiqueta: g.comercio || "Sin comercio",
+            total: g.monto,
+            cantidad: 1,
+            gasto: g,
+          })),
+      }))
+      .sort((a, b) => b.total - a.total);
+    return { clave: m.anioMes, etiqueta: m.anioMes, total: m.total, cantidad: m.gastos.length, hijos };
+  });
+}

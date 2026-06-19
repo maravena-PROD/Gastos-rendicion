@@ -17,7 +17,8 @@ import {
   contarPendientes,
   aprobadosPorTipo,
   rechazados,
-  gastosPorMes,
+  arbolMisGastos,
+  type NodoDetalle,
 } from "@/lib/dashboard";
 import { formatCLP, formatMes } from "@/lib/format";
 import { GraficoCategorias } from "@/components/dashboard/GraficoCategorias";
@@ -43,6 +44,110 @@ function EstadoBadge({ estado }: { estado: string }) {
   );
 }
 
+function Chevron({ abierto }: { abierto: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${abierto ? "rotate-90" : ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+/**
+ * Fila recursiva de la tabla dinámica de Mis gastos (Mes ▸ Categoría ▸ gasto).
+ * Las hojas (registros individuales) muestran el badge de estado; las rechazadas
+ * son accionables para corregir.
+ */
+function FilaDetalle({
+  nodo,
+  nivel,
+  expandidos,
+  onToggle,
+  onCorregir,
+}: {
+  nodo: NodoDetalle;
+  nivel: number;
+  expandidos: Set<string>;
+  onToggle: (clave: string) => void;
+  onCorregir: (g: Gasto) => void;
+}) {
+  const tieneHijos = !!nodo.hijos?.length;
+  const abierto = expandidos.has(nodo.clave);
+  const gasto = nodo.gasto;
+  const rechazado = gasto?.estado === "Rechazado";
+  const accionable = tieneHijos || rechazado;
+  const sangria = 8 + nivel * 16;
+
+  function activar() {
+    if (tieneHijos) onToggle(nodo.clave);
+    else if (rechazado && gasto) onCorregir(gasto);
+  }
+
+  return (
+    <>
+      <div
+        onClick={accionable ? activar : undefined}
+        role={accionable ? "button" : undefined}
+        tabIndex={accionable ? 0 : undefined}
+        onKeyDown={accionable ? (e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), activar()) : undefined}
+        title={rechazado ? "Corregir gasto rechazado" : undefined}
+        className={`flex items-center justify-between gap-2 border-b border-bosca-gris/50 py-2 ${
+          accionable ? "cursor-pointer hover:bg-bosca-crema/60" : ""
+        }`}
+        style={{ paddingLeft: sangria }}
+      >
+        <span className="flex min-w-0 items-center gap-1.5">
+          {tieneHijos ? <Chevron abierto={abierto} /> : <span className="w-4 shrink-0" />}
+          <span className="min-w-0 truncate">
+            {gasto ? (
+              <span className="text-sm text-gray-700">
+                <span className="tabular-nums text-gray-400">{gasto.fechaDocumento.slice(8, 10) || "—"} · </span>
+                <span className="font-medium text-bosca-carbon">{nodo.etiqueta}</span>
+                {gasto.tipoRendicion === "Devolucion" && <span className="text-bosca-ambar"> · Devolución</span>}
+              </span>
+            ) : (
+              <span className="text-sm">
+                <span className={nivel === 0 ? "font-semibold capitalize text-bosca-carbon" : "font-medium text-bosca-carbon"}>
+                  {nivel === 0 ? formatMes(nodo.etiqueta) : nodo.etiqueta}
+                </span>
+              </span>
+            )}
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2 pr-2 sm:gap-3">
+          {gasto ? (
+            <EstadoBadge estado={gasto.estado} />
+          ) : (
+            <span className="text-xs text-gray-400">{nodo.cantidad}</span>
+          )}
+          <span className="w-20 text-right text-sm font-semibold tabular-nums text-gray-900 sm:w-28">
+            {formatCLP(nodo.total)}
+          </span>
+        </span>
+      </div>
+      {abierto &&
+        nodo.hijos?.map((h) => (
+          <FilaDetalle
+            key={h.clave}
+            nodo={h}
+            nivel={nivel + 1}
+            expandidos={expandidos}
+            onToggle={onToggle}
+            onCorregir={onCorregir}
+          />
+        ))}
+    </>
+  );
+}
+
 function Dashboard() {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [rol, setRol] = useState<string>("");
@@ -58,7 +163,8 @@ function Dashboard() {
   const [cuenta, setCuenta] = useState({ banco: "", cuentaCorriente: "" });
   const [usuario, setUsuario] = useState({ nombre: "", area: "", cargo: "" });
   const [editando, setEditando] = useState<Gasto | null>(null);
-  const [mesesAbiertos, setMesesAbiertos] = useState<Record<string, boolean>>({});
+  const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
+  const [tocado, setTocado] = useState(false);
 
   useEffect(() => {
     async function cargar() {
@@ -112,15 +218,21 @@ function Dashboard() {
   );
   // El PDF solo exporta gastos aprobados; sin aprobados en el rango, no hay nada que descargar.
   const aprobadosEnRango = useMemo(() => delRango.filter((g) => g.estado === "Aprobado").length, [delRango]);
-  const meses = useMemo(() => gastosPorMes(delRango), [delRango]);
+  const arbol = useMemo(() => arbolMisGastos(delRango), [delRango]);
   const esAdmin = rol === "Administrador";
 
-  // Un mes está abierto si se alternó explícitamente; por defecto se abre el más reciente.
-  function mesAbierto(anioMes: string, indice: number): boolean {
-    return mesesAbiertos[anioMes] ?? indice === 0;
-  }
-  function alternarMes(anioMes: string, indice: number) {
-    setMesesAbiertos((prev) => ({ ...prev, [anioMes]: !(prev[anioMes] ?? indice === 0) }));
+  // Mientras el usuario no toque nada, el mes más reciente aparece abierto.
+  const primerMes = arbol[0]?.clave;
+  const expandidosEfectivos = tocado ? expandidos : new Set(primerMes ? [primerMes] : []);
+
+  function alternarNodo(clave: string) {
+    setExpandidos(() => {
+      const sig = new Set(expandidosEfectivos);
+      if (sig.has(clave)) sig.delete(clave);
+      else sig.add(clave);
+      return sig;
+    });
+    if (!tocado) setTocado(true);
   }
 
   async function descargarReporte() {
@@ -275,88 +387,34 @@ function Dashboard() {
             </section>
 
             <section className="rounded-2xl border border-bosca-gris bg-white p-4 sm:p-5">
-              <h2 className="mb-3 text-sm font-semibold text-gray-700">Detalle de gastos por mes</h2>
-              {meses.length === 0 ? (
-                <p className="text-sm text-gray-400">No hay gastos en el período seleccionado.</p>
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <h2 className="text-sm font-semibold text-gray-700">Detalle de gastos por mes</h2>
+                <p className="text-xs text-gray-400">Mes ▸ Categoría ▸ Gasto</p>
+              </div>
+              {arbol.length === 0 ? (
+                <p className="py-4 text-sm text-gray-400">No hay gastos en el período seleccionado.</p>
               ) : (
-                <div className="space-y-3">
-                  {meses.map((m, i) => {
-                    const abierto = mesAbierto(m.anioMes, i);
-                    return (
-                      <div key={m.anioMes} className="overflow-hidden rounded-xl border border-bosca-gris">
-                        <button
-                          onClick={() => alternarMes(m.anioMes, i)}
-                          aria-expanded={abierto}
-                          className="flex w-full items-center gap-3 bg-bosca-crema/60 px-3 py-2.5 text-left hover:bg-bosca-crema"
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${abierto ? "rotate-90" : ""}`}
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="m9 6 6 6-6 6" />
-                          </svg>
-                          <span className="flex-1 text-sm font-semibold capitalize text-gray-800">
-                            {formatMes(m.anioMes)}
-                          </span>
-                          <span className="text-[11px] text-gray-400">{m.gastos.length} gastos</span>
-                          <span className="text-sm font-bold tabular-nums text-gray-900">{formatCLP(m.total)}</span>
-                        </button>
-                        {abierto && (
-                          <ul className="divide-y divide-bosca-gris">
-                            {m.gastos.map((gasto) => {
-                              const dia = gasto.fechaDocumento.slice(8, 10);
-                              const corregible = gasto.estado === "Rechazado";
-                              return (
-                                <li key={gasto.id} className="px-3 py-2.5">
-                                  <div className="flex items-center gap-3">
-                                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-bosca-crema text-center leading-none">
-                                      <span className="text-sm font-bold tabular-nums text-gray-700">{dia || "—"}</span>
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <p className="truncate text-sm font-medium text-gray-800">
-                                        {gasto.comercio || "Sin comercio"}
-                                      </p>
-                                      <p className="flex flex-wrap items-center gap-x-2 text-xs text-gray-400">
-                                        <span>{gasto.categoria}</span>
-                                        {gasto.tipoRendicion === "Devolucion" && (
-                                          <span className="text-bosca-ambar">Devolución</span>
-                                        )}
-                                      </p>
-                                    </div>
-                                    <div className="flex shrink-0 flex-col items-end gap-1">
-                                      <span className="text-sm font-bold tabular-nums text-gray-900">
-                                        {formatCLP(gasto.monto)}
-                                      </span>
-                                      <EstadoBadge estado={gasto.estado} />
-                                    </div>
-                                  </div>
-                                  {corregible && (
-                                    <div className="mt-1.5 flex items-center justify-between gap-2 pl-12">
-                                      <p className="min-w-0 flex-1 truncate text-xs text-bosca-burdeo">
-                                        {gasto.motivo ? `Motivo: ${gasto.motivo}` : "Rechazado"}
-                                      </p>
-                                      <button
-                                        onClick={() => setEditando(gasto)}
-                                        className="shrink-0 rounded-lg border border-bosca-gris px-2.5 py-1 text-xs text-bosca-carbon hover:bg-bosca-gris"
-                                      >
-                                        Corregir
-                                      </button>
-                                    </div>
-                                  )}
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <>
+                  <div className="flex items-center justify-between border-b border-bosca-gris pb-2 text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                    <span className="pl-2">Detalle</span>
+                    <span className="flex items-center gap-3 pr-2">
+                      <span>Estado / N°</span>
+                      <span className="w-24 text-right sm:w-28">Monto</span>
+                    </span>
+                  </div>
+                  <div>
+                    {arbol.map((n) => (
+                      <FilaDetalle
+                        key={n.clave}
+                        nodo={n}
+                        nivel={0}
+                        expandidos={expandidosEfectivos}
+                        onToggle={alternarNodo}
+                        onCorregir={setEditando}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </section>
 
