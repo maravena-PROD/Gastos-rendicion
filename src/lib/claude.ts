@@ -17,6 +17,7 @@ Reglas:
 - "fechaDocumento" en formato AAAA-MM-DD.
 - "rutEmisor" con formato chileno (ej. 76.543.219-7) si aparece.
 - "tipoDocumento" debe ser "Boleta" o "Factura" según el documento; null si no se distingue.
+- "numeroDocumento" es el folio/número de la boleta o factura (ej. "N° 12345", "Folio 000123", "Boleta Nº 45"). Devuelve solo el número, sin la palabra "boleta"/"factura"/"folio". null si no aparece.
 - "monto" es el TOTAL a pagar (con IVA incluido).
 - "montoNeto" e "iva" son enteros CLP si aparecen desglosados en el documento; si no aparecen, null.
 - Si un dato no aparece o no estás seguro, devuelve null. NUNCA inventes datos.`;

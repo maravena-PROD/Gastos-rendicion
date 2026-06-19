@@ -58,6 +58,7 @@ export function TarjetaConfirmacion({
     borrador.monto !== null ? String(borrador.monto) : "",
   );
   const [fecha, setFecha] = useState(borrador.fechaDocumento ?? "");
+  const [numeroDocumento, setNumeroDocumento] = useState(borrador.numeroDocumento ?? "");
   const [categoria, setCategoria] = useState<string>(borrador.categoria ?? "");
   const [observacion, setObservacion] = useState(inicial?.observacion ?? "");
 
@@ -90,10 +91,13 @@ export function TarjetaConfirmacion({
 
   const requiereCuenta = tipoRendicion === "Devolucion";
   const cuentaCompleta = banco.trim() !== "" && cuentaCorriente.trim() !== "";
+  // El número de documento es obligatorio para Boleta y Factura; opcional en "Otro".
+  const requiereNumero = tipoDocumento === "Boleta" || tipoDocumento === "Factura";
+  const numeroCompleto = !requiereNumero || numeroDocumento.trim() !== "";
   const completo =
     comercio.trim() !== "" && monto !== null && monto > 0 && fecha !== "" &&
     categoria !== "" && cc !== "" && area !== "" && ubicacion !== "" &&
-    (!requiereCuenta || cuentaCompleta);
+    numeroCompleto && (!requiereCuenta || cuentaCompleta);
 
   function confirmar() {
     if (!completo || categoria === "" || monto === null) return;
@@ -103,7 +107,7 @@ export function TarjetaConfirmacion({
       categoria: categoria as Categoria,
       fechaDocumento: fecha,
       rutEmisor: borrador.rutEmisor ?? undefined,
-      numeroDocumento: borrador.numeroDocumento ?? undefined,
+      numeroDocumento: numeroDocumento.trim() || undefined,
       direccion: borrador.direccion ?? undefined,
       observacion: observacion.trim() || undefined,
       imagenUrl,
@@ -189,6 +193,22 @@ export function TarjetaConfirmacion({
             ))}
           </select>
         </label>
+        <label className="text-xs text-gray-500">
+          N° de {requiereNumero ? tipoDocumento.toLowerCase() : "documento"}
+          {!requiereNumero && " (opcional)"}
+          <input
+            className="mt-1 w-full rounded-lg border border-bosca-gris px-3 py-2 text-sm text-bosca-carbon"
+            inputMode="numeric"
+            placeholder="Ej. 12345"
+            value={numeroDocumento}
+            onChange={(e) => setNumeroDocumento(e.target.value)}
+          />
+          {requiereNumero && numeroDocumento.trim() === "" && (
+            <span className="mt-1 block text-bosca-burdeo">
+              Ingresa el número de la {tipoDocumento.toLowerCase()} para registrar.
+            </span>
+          )}
+        </label>
         <div className="flex gap-3">
           <label className="flex-1 text-xs text-gray-500">
             Neto
@@ -209,6 +229,17 @@ export function TarjetaConfirmacion({
             />
           </label>
         </div>
+        {neto + iva > 0 && (
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500">Total (neto + IVA)</span>
+            <span className="font-medium text-bosca-carbon">{formatCLP(neto + iva)}</span>
+          </div>
+        )}
+        {neto + iva > 0 && monto !== null && neto + iva !== monto && (
+          <p className="-mt-1 text-xs text-bosca-burdeo">
+            El total calculado ({formatCLP(neto + iva)}) no coincide con el monto ({formatCLP(monto)}).
+          </p>
+        )}
         <label className="text-xs text-gray-500">
           Centro de costo
           <select
