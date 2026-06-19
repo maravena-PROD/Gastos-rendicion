@@ -13,6 +13,84 @@ export interface ExtraccionGasto {
   tipoDocumento: TipoDocumento | null;
   montoNeto: number | null; // entero CLP
   iva: number | null; // entero CLP
+  rutReceptor: string | null; // RUT al que se emite la factura (cliente)
+  razonSocialReceptor: string | null; // razón social del receptor
+}
+
+/** Intención del turno del usuario, usada para guiar el flujo del chat. */
+export const INTENCIONES = ["gasto", "saludo", "correccion", "fuera_de_tema", "otro"] as const;
+export type IntencionMensaje = (typeof INTENCIONES)[number];
+
+/** Respuesta conversacional del asistente: datos + respuesta redactada + intención. */
+export interface RespuestaConversacion {
+  extraccion: ExtraccionGasto;
+  intencion: IntencionMensaje;
+  mensaje: string;
+}
+
+/** Normaliza el texto de intención del modelo a un IntencionMensaje; desconocido → "otro". */
+export function normalizarIntencion(valor: string | null): IntencionMensaje {
+  if (!valor) return "otro";
+  const limpio = valor.trim().toLowerCase();
+  return (INTENCIONES as readonly string[]).includes(limpio)
+    ? (limpio as IntencionMensaje)
+    : "otro";
+}
+
+/**
+ * Datos de la empresa a la que deben estar emitidas las facturas. Una factura
+ * de gasto corporativo debe tener a la empresa como RECEPTOR; si está emitida a
+ * otro RUT/razón social, no corresponde rendirla.
+ */
+export const RUT_EMPRESA = "79.610.100-8";
+/** Token distintivo de la razón social de la empresa, para el cotejo por nombre. */
+export const RAZON_SOCIAL_EMPRESA = "INGENIERIA Y COMBUSTION BOSCA CHILE SA";
+
+/** Normaliza un RUT chileno para comparar: sin puntos, guion ni espacios, en minúscula. */
+export function normalizarRut(rut: string | null): string | null {
+  if (!rut) return null;
+  const limpio = rut.replace(/[.\s-]/g, "").toLowerCase();
+  return limpio.length >= 2 ? limpio : null;
+}
+
+/** Resultado de validar el receptor de una factura. */
+export interface ValidacionReceptor {
+  ok: boolean;
+  motivo?: string; // explicación cuando ok === false
+}
+
+/**
+ * Verifica que una factura esté emitida a la empresa (ver {@link RUT_EMPRESA}).
+ *
+ * Solo aplica a facturas; boletas y otros documentos siempre pasan. Rechaza
+ * cuando hay evidencia positiva de otro receptor: un RUT distinto al de la
+ * empresa, o —si no se leyó el RUT— una razón social que no es la de la empresa.
+ * Si no se pudo leer ningún dato del receptor, no bloquea, para no producir
+ * falsos rechazos por fallas de OCR (el usuario igual revisa la tarjeta).
+ */
+export function validarReceptorFactura(e: ExtraccionGasto): ValidacionReceptor {
+  if (e.tipoDocumento !== "Factura") return { ok: true };
+
+  const aQuien = e.razonSocialReceptor ? `${e.razonSocialReceptor}` : "otro receptor";
+
+  const rutReceptor = normalizarRut(e.rutReceptor);
+  if (rutReceptor) {
+    if (rutReceptor === normalizarRut(RUT_EMPRESA)) return { ok: true };
+    return {
+      ok: false,
+      motivo: `❌ La factura no corresponde: está emitida a ${aQuien} (RUT ${e.rutReceptor}), no a ${RAZON_SOCIAL_EMPRESA}.`,
+    };
+  }
+
+  if (e.razonSocialReceptor) {
+    if (e.razonSocialReceptor.toLowerCase().includes("bosca")) return { ok: true };
+    return {
+      ok: false,
+      motivo: `❌ La factura no corresponde: está emitida a ${e.razonSocialReceptor}, no a ${RAZON_SOCIAL_EMPRESA}.`,
+    };
+  }
+
+  return { ok: true };
 }
 
 /** Convierte texto libre a un TipoDocumento válido, o null. */

@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { getBearerToken } from "@/lib/auth";
 import { autenticar } from "@/lib/auth-server";
 import { extraerDeTexto, extraerDeImagen } from "@/lib/claude";
-import { camposFaltantes, hayDatosEsenciales, type ExtraccionGasto } from "@/lib/extraccion";
+import {
+  camposFaltantes,
+  fusionarExtraccion,
+  hayDatosEsenciales,
+  validarReceptorFactura,
+  type ExtraccionGasto,
+} from "@/lib/extraccion";
 import { validarImagen } from "@/lib/validacion-archivo";
 
 export async function POST(req: Request) {
@@ -29,8 +35,21 @@ export async function POST(req: Request) {
           { status: 400 },
         );
       }
-      const extraccion = await extraerDeImagen(body.base64, v.mimeType);
-      return NextResponse.json({ extraccion, faltantes: camposFaltantes(extraccion) });
+      const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Santiago" });
+      const r = await extraerDeImagen(body.base64, v.mimeType, { borrador: body.borrador, hoy });
+      const receptorBase = body.borrador
+        ? fusionarExtraccion(body.borrador, r.extraccion)
+        : r.extraccion;
+      const receptor = validarReceptorFactura(receptorBase);
+      if (!receptor.ok) {
+        return NextResponse.json({ extraccion: r.extraccion, rechazo: { motivo: receptor.motivo } });
+      }
+      return NextResponse.json({
+        extraccion: r.extraccion,
+        mensaje: r.mensaje,
+        intencion: r.intencion,
+        faltantes: camposFaltantes(r.extraccion),
+      });
     }
     if (body.texto) {
       const borrador = body.borrador;
@@ -40,8 +59,20 @@ export async function POST(req: Request) {
         borrador && hayDatosEsenciales(borrador) ? (camposFaltantes(borrador)[0] ?? null) : null;
       // Fecha de hoy en zona Chile (en-CA da formato AAAA-MM-DD) para fechas relativas.
       const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Santiago" });
-      const extraccion = await extraerDeTexto(body.texto, { borrador, campoPreguntado, hoy });
-      return NextResponse.json({ extraccion, faltantes: camposFaltantes(extraccion) });
+      const r = await extraerDeTexto(body.texto, { borrador, campoPreguntado, hoy });
+      const receptorBase = body.borrador
+        ? fusionarExtraccion(body.borrador, r.extraccion)
+        : r.extraccion;
+      const receptor = validarReceptorFactura(receptorBase);
+      if (!receptor.ok) {
+        return NextResponse.json({ extraccion: r.extraccion, rechazo: { motivo: receptor.motivo } });
+      }
+      return NextResponse.json({
+        extraccion: r.extraccion,
+        mensaje: r.mensaje,
+        intencion: r.intencion,
+        faltantes: camposFaltantes(r.extraccion),
+      });
     }
     return NextResponse.json({ error: "Envía texto o imagen" }, { status: 400 });
   } catch {

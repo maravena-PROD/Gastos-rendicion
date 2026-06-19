@@ -39,6 +39,8 @@ const EXTRACCION_VACIA: ExtraccionGasto = {
   tipoDocumento: null,
   montoNeto: null,
   iva: null,
+  rutReceptor: null,
+  razonSocialReceptor: null,
 };
 
 type Mensaje =
@@ -51,7 +53,7 @@ function Chat({ perfil }: { perfil: Perfil }) {
     {
       tipo: "texto",
       autor: "bot",
-      texto: `Hola ${perfil.nombre} 👋 ¿Qué gasto registramos hoy?`,
+      texto: `Hola ${perfil.nombre}. ¿Qué gasto vas a registrar?`,
     },
   ]);
   const [borrador, setBorrador] = useState<ExtraccionGasto>(EXTRACCION_VACIA);
@@ -88,15 +90,25 @@ function Chat({ perfil }: { perfil: Perfil }) {
     return m.filter((x) => x.tipo !== "confirmacion" && x.tipo !== "otro");
   }
 
-  function avanzar(nuevoBorrador: ExtraccionGasto, img: { url: string; id: string } | null) {
-    if (camposFaltantes(nuevoBorrador).length === 0) {
+  function avanzar(
+    nuevoBorrador: ExtraccionGasto,
+    img: { url: string; id: string } | null,
+    mensaje?: string,
+    intencion?: string,
+  ) {
+    // Fuera de tema nunca avanza a la tarjeta, aunque el borrador esté completo.
+    const completa =
+      camposFaltantes(nuevoBorrador).length === 0 && intencion !== "fuera_de_tema";
+    // Respuesta del bot: la redactada por el LLM, o la pregunta fija como fallback.
+    const texto =
+      mensaje?.trim() ||
+      (completa ? null : (siguientePregunta(nuevoBorrador) ?? "¿Qué dato del gasto necesitas indicar?"));
+    if (texto) agregarBot(texto);
+    if (completa) {
       setMensajes((m) => [
         ...m,
         { tipo: "confirmacion", borrador: nuevoBorrador, imagenUrl: img?.url, imagenDriveId: img?.id },
       ]);
-    } else {
-      const pregunta = siguientePregunta(nuevoBorrador);
-      if (pregunta) agregarBot(pregunta);
     }
   }
 
@@ -105,12 +117,16 @@ function Chat({ perfil }: { perfil: Perfil }) {
     agregarUsuario(texto);
     setProcesando(true);
     try {
-      const { extraccion } = await extraerDesdeTexto(texto, borrador);
+      const { extraccion, mensaje, intencion, rechazo } = await extraerDesdeTexto(texto, borrador);
+      if (rechazo) {
+        agregarBot(rechazo.motivo);
+        return;
+      }
       const fusion = fusionarExtraccion(borrador, extraccion);
       setBorrador(fusion);
-      avanzar(fusion, imagen);
+      avanzar(fusion, imagen, mensaje, intencion);
     } catch {
-      agregarBot("No pude procesar eso. ¿Puedes reformularlo?");
+      agregarBot("No pude procesar tu mensaje. ¿Puedes reformularlo?");
     } finally {
       setProcesando(false);
     }
@@ -124,13 +140,17 @@ function Chat({ perfil }: { perfil: Perfil }) {
       const { base64, nombre } = await reducirImagen(file);
       const [sub, ext] = await Promise.all([
         subirBoleta(base64, nombre),
-        extraerDesdeImagen(base64),
+        extraerDesdeImagen(base64, borrador),
       ]);
+      if (ext.rechazo) {
+        agregarBot(ext.rechazo.motivo);
+        return;
+      }
       const img = { url: sub.url, id: sub.id };
       setImagen(img);
       const fusion = fusionarExtraccion(borrador, ext.extraccion);
       setBorrador(fusion);
-      avanzar(fusion, img);
+      avanzar(fusion, img, ext.mensaje, ext.intencion);
     } catch {
       agregarBot("No pude leer la boleta. Intenta con otra foto o cuéntame los datos.");
     } finally {
@@ -144,7 +164,7 @@ function Chat({ perfil }: { perfil: Perfil }) {
       await guardarGasto(datos);
       setMensajes((m) => [
         ...quitarTransitorios(m),
-        { tipo: "texto", autor: "bot", texto: "✅ Gasto registrado." },
+        { tipo: "texto", autor: "bot", texto: "Gasto registrado correctamente." },
         { tipo: "otro" },
       ]);
       setBorrador(EXTRACCION_VACIA);
@@ -160,19 +180,19 @@ function Chat({ perfil }: { perfil: Perfil }) {
     setMensajes((m) => quitarTransitorios(m));
     setBorrador(EXTRACCION_VACIA);
     setImagen(null);
-    agregarBot("Listo, lo descarté. ¿Registramos otro?");
+    agregarBot("Gasto descartado. ¿Registramos otro?");
   }
 
   function onOtroSi() {
     setMensajes((m) => [
       ...quitarTransitorios(m),
-      { tipo: "texto", autor: "bot", texto: "Dale 👍 Cuéntame el siguiente o adjunta la boleta." },
+      { tipo: "texto", autor: "bot", texto: "Perfecto. Indícame el siguiente gasto o adjunta la boleta." },
     ]);
   }
   function onOtroNo() {
     setMensajes((m) => [
       ...quitarTransitorios(m),
-      { tipo: "texto", autor: "bot", texto: "Perfecto, ¡gracias! Cuando quieras registrar otro, escríbeme." },
+      { tipo: "texto", autor: "bot", texto: "Listo. Cuando necesites registrar otro gasto, escríbeme." },
     ]);
   }
 
