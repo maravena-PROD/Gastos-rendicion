@@ -197,7 +197,17 @@ export async function extraerDeTexto(
 export async function extraerDeImagen(
   base64: string,
   mediaType: "image/jpeg" | "image/png",
-): Promise<ExtraccionGasto> {
+  contexto?: ContextoTexto,
+): Promise<RespuestaConversacion> {
+  const instruccion = [
+    contexto?.borrador
+      ? `Datos del gasto ya capturados: ${resumenBorrador(contexto.borrador)}.`
+      : null,
+    "Extrae los datos de esta boleta o factura y redacta tu respuesta.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   const params = {
     model: MODELO,
     max_tokens: 1024,
@@ -208,7 +218,7 @@ export async function extraerDeImagen(
         role: "user" as const,
         content: [
           { type: "image" as const, source: { type: "base64" as const, media_type: mediaType, data: base64 } },
-          { type: "text" as const, text: "Extrae los datos de esta boleta o factura." },
+          { type: "text" as const, text: instruccion },
         ],
       },
     ],
@@ -216,5 +226,5 @@ export async function extraerDeImagen(
   // output_config no está en MessageCreateParams base; cast local para la llamada.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const res = await getCliente().messages.create(params as any);
-  return parseExtraccion(res as never);
+  return parseRespuesta(res as never);
 }

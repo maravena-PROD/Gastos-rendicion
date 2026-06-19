@@ -115,7 +115,7 @@ describe("extraerDeTexto", () => {
 });
 
 describe("extraerDeImagen", () => {
-  it("incluye un bloque de imagen en el mensaje y mapea la respuesta", async () => {
+  it("incluye un bloque de imagen y devuelve RespuestaConversacion", async () => {
     messagesCreate.mockResolvedValue(
       respuestaConJson({
         comercio: "Shell",
@@ -125,16 +125,58 @@ describe("extraerDeImagen", () => {
         rutEmisor: "76.543.219-7",
         numeroDocumento: "0012345",
         direccion: null,
+        intencion: "gasto",
+        mensaje: "Leí la boleta. ¿De qué categoría fue el gasto?",
       }),
     );
     const r = await extraerDeImagen("BASE64DATA", "image/jpeg");
-    expect(r.comercio).toBe("Shell");
-    expect(r.rutEmisor).toBe("76.543.219-7");
-    // verifica que se mandó un bloque de imagen
+    expect(r.extraccion.comercio).toBe("Shell");
+    expect(r.extraccion.rutEmisor).toBe("76.543.219-7");
+    expect(r.mensaje).toContain("boleta");
     const arg = messagesCreate.mock.calls[0][0] as {
       messages: { content: Array<{ type: string }> }[];
     };
     const tipos = arg.messages[0].content.map((c) => c.type);
     expect(tipos).toContain("image");
+  });
+
+  it("incluye los datos ya capturados del borrador en el prompt", async () => {
+    messagesCreate.mockResolvedValue(
+      respuestaConJson({
+        comercio: "Shell",
+        monto: 30000,
+        fechaDocumento: "2026-06-09",
+        categoria: "Combustible",
+        rutEmisor: null,
+        numeroDocumento: null,
+        direccion: null,
+        intencion: "gasto",
+        mensaje: "Listo.",
+      }),
+    );
+    await extraerDeImagen("BASE64DATA", "image/jpeg", {
+      borrador: {
+        comercio: "Shell",
+        monto: null,
+        fechaDocumento: null,
+        categoria: null,
+        rutEmisor: null,
+        numeroDocumento: null,
+        direccion: null,
+        tipoDocumento: null,
+        montoNeto: null,
+        iva: null,
+        rutReceptor: null,
+        razonSocialReceptor: null,
+      },
+    });
+    const arg = messagesCreate.mock.calls[0][0] as {
+      messages: { content: Array<{ type: string; text?: string }> }[];
+    };
+    const textos = arg.messages[0].content
+      .filter((c) => c.type === "text")
+      .map((c) => c.text)
+      .join(" ");
+    expect(textos).toContain("Shell");
   });
 });
