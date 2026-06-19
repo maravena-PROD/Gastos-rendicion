@@ -4,6 +4,7 @@ import { autenticar } from "@/lib/auth-server";
 import { extraerDeTexto, extraerDeImagen } from "@/lib/claude";
 import {
   camposFaltantes,
+  fusionarExtraccion,
   hayDatosEsenciales,
   validarReceptorFactura,
   type ExtraccionGasto,
@@ -36,7 +37,10 @@ export async function POST(req: Request) {
       }
       const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Santiago" });
       const r = await extraerDeImagen(body.base64, v.mimeType, { borrador: body.borrador, hoy });
-      const receptor = validarReceptorFactura(r.extraccion);
+      const receptorBase = body.borrador
+        ? fusionarExtraccion(body.borrador, r.extraccion)
+        : r.extraccion;
+      const receptor = validarReceptorFactura(receptorBase);
       if (!receptor.ok) {
         return NextResponse.json({ extraccion: r.extraccion, rechazo: { motivo: receptor.motivo } });
       }
@@ -56,7 +60,10 @@ export async function POST(req: Request) {
       // Fecha de hoy en zona Chile (en-CA da formato AAAA-MM-DD) para fechas relativas.
       const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Santiago" });
       const r = await extraerDeTexto(body.texto, { borrador, campoPreguntado, hoy });
-      const receptor = validarReceptorFactura(r.extraccion);
+      const receptorBase = body.borrador
+        ? fusionarExtraccion(body.borrador, r.extraccion)
+        : r.extraccion;
+      const receptor = validarReceptorFactura(receptorBase);
       if (!receptor.ok) {
         return NextResponse.json({ extraccion: r.extraccion, rechazo: { motivo: receptor.motivo } });
       }

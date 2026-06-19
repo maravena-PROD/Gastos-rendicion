@@ -100,7 +100,9 @@ function Chat({ perfil }: { perfil: Perfil }) {
     const completa =
       camposFaltantes(nuevoBorrador).length === 0 && intencion !== "fuera_de_tema";
     // Respuesta del bot: la redactada por el LLM, o la pregunta fija como fallback.
-    const texto = mensaje?.trim() || (completa ? null : siguientePregunta(nuevoBorrador));
+    const texto =
+      mensaje?.trim() ||
+      (completa ? null : (siguientePregunta(nuevoBorrador) ?? "¿Qué dato del gasto necesitas indicar?"));
     if (texto) agregarBot(texto);
     if (completa) {
       setMensajes((m) => [
