@@ -272,26 +272,30 @@ function Dashboard() {
           <p className="text-center text-sm text-gray-400">Aún no hay gastos registrados.</p>
         ) : (
           <>
-            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-bosca-gris bg-white p-3">
-              <label className="text-sm text-gray-500">Desde:</label>
-              <input
-                type="date"
-                className="rounded-lg border border-bosca-gris px-3 py-1 text-sm text-gray-900"
-                value={desdeActivo}
-                onChange={(e) => setDesde(e.target.value)}
-              />
-              <label className="text-sm text-gray-500">Hasta:</label>
-              <input
-                type="date"
-                className="rounded-lg border border-bosca-gris px-3 py-1 text-sm text-gray-900"
-                value={hastaActivo}
-                onChange={(e) => setHasta(e.target.value)}
-              />
+            <div className="flex flex-col gap-3 rounded-2xl border border-bosca-gris bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+              <div className="flex items-center gap-2">
+                <label className="w-12 shrink-0 text-sm text-gray-500 sm:w-auto">Desde:</label>
+                <input
+                  type="date"
+                  className="min-w-0 flex-1 rounded-lg border border-bosca-gris px-3 py-1 text-sm text-gray-900 sm:flex-none"
+                  value={desdeActivo}
+                  onChange={(e) => setDesde(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="w-12 shrink-0 text-sm text-gray-500 sm:w-auto">Hasta:</label>
+                <input
+                  type="date"
+                  className="min-w-0 flex-1 rounded-lg border border-bosca-gris px-3 py-1 text-sm text-gray-900 sm:flex-none"
+                  value={hastaActivo}
+                  onChange={(e) => setHasta(e.target.value)}
+                />
+              </div>
               <button
                 onClick={descargarReporte}
                 disabled={descargando || aprobadosEnRango === 0}
                 title={aprobadosEnRango === 0 ? "No hay gastos aprobados en el período" : "Exporta solo gastos aprobados"}
-                className="ml-auto rounded-lg bg-bosca-burdeo px-3 py-1.5 text-sm font-medium text-white hover:bg-bosca-burdeo-h disabled:opacity-40"
+                className="w-full rounded-lg bg-bosca-burdeo px-3 py-1.5 text-sm font-medium text-white hover:bg-bosca-burdeo-h disabled:opacity-40 sm:ml-auto sm:w-auto"
               >
                 {descargando ? "Generando…" : `Descargar PDF${aprobadosEnRango > 0 ? ` (${aprobadosEnRango})` : ""}`}
               </button>
@@ -342,18 +346,18 @@ function Dashboard() {
                 const pend = contarPendientes(delRango);
                 return (
                   <div className="space-y-3 text-sm">
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      <div className="min-w-0">
                         <p className="text-gray-500">Aprobado (Rendición)</p>
-                        <p className="text-xl font-bold tabular-nums text-gray-900 sm:text-2xl">{formatCLP(aprob.rendicion)}</p>
+                        <p className="text-lg font-bold tabular-nums text-gray-900 sm:text-2xl">{formatCLP(aprob.rendicion)}</p>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-gray-500">Aprobado (Devolución)</p>
-                        <p className="text-xl font-bold tabular-nums text-bosca-ambar sm:text-2xl">{formatCLP(aprob.devolucion)}</p>
+                        <p className="text-lg font-bold tabular-nums text-bosca-ambar sm:text-2xl">{formatCLP(aprob.devolucion)}</p>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-gray-500">Pendientes</p>
-                        <p className="text-xl font-bold tabular-nums text-gray-900 sm:text-2xl">{pend}</p>
+                        <p className="text-lg font-bold tabular-nums text-gray-900 sm:text-2xl">{pend}</p>
                       </div>
                     </div>
                     <div>
