@@ -27,9 +27,11 @@ Reglas de extracción:
 - "rutEmisor" con formato chileno (ej. 76.543.219-7) si aparece.
 - "tipoDocumento" debe ser "Boleta" o "Factura" según el documento; null si no se distingue.
 - "numeroDocumento" es el folio/número (ej. "N° 12345", "Folio 000123"). Devuelve solo el número, sin la palabra "boleta"/"factura"/"folio". null si no aparece.
+- En vouchers de tarjeta (Transbank/Redcompra/Getnet) NO hay folio de boleta: usa el número de "OPERACIÓN" como "numeroDocumento". NO uses el de "AUTORIZACIÓN".
 - "monto" es el TOTAL a pagar (con IVA incluido).
 - "montoNeto" e "iva" son enteros CLP si aparecen desglosados; si no, null.
 - "rutEmisor" y "comercio" identifican a QUIEN EMITE la factura (el proveedor/vendedor).
+- "comercio" es el negocio donde se hizo el gasto, NO el procesador de pago. En vouchers de tarjeta suele aparecer arriba la marca del medio de pago ("TRANSBANK", "REDCOMPRA", "GETNET") y debajo el nombre real del comercio (ej. "CARGO TRUCK" / "COMERCIAL CARGO TRUCK S.A."). Usa el nombre del comercio, nunca el del procesador. El RUT del emisor es el del comercio.
 - "rutReceptor" y "razonSocialReceptor" identifican al RECEPTOR: el cliente AL QUE se emite la factura (aparece como "Señor(es):", "Cliente", "Razón Social", con su propio R.U.T.). NO confundas el receptor con el emisor. En boletas normalmente no hay receptor: devuelve null en ambos.
 - Si un dato no aparece o no estás seguro, devuelve null. NUNCA inventes datos.
 
